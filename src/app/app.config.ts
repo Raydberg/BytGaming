@@ -1,17 +1,31 @@
-import { provideHttpClient, withFetch } from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
+import { PreloadAllModules, provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withPreloading, withViewTransitions } from '@angular/router';
 import Aura from '@primeng/themes/aura';
 import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
+import { provideClientHydration, withHttpTransferCacheOptions } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes,
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(
+      routes,
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
-      withEnabledBlockingInitialNavigation()),
-    provideHttpClient(withFetch()),
+      withEnabledBlockingInitialNavigation(),
+      withViewTransitions(),
+      withPreloading(PreloadAllModules)
+    ),
+    provideClientHydration(
+      withHttpTransferCacheOptions({
+        includePostRequests: true,
+      })
+    ),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([])
+    ),
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {

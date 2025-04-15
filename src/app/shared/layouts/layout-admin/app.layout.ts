@@ -2,16 +2,17 @@ import { Component, Renderer2, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
-import { AppTopbar } from './app.topbar';
 import { AppSidebar } from './app.sidebar';
 import { AppFooter } from './app.footer';
 import { LayoutService } from '../../../core/services/layout.service';
+import { TopBarComponent } from '../../components/top-bar/top-bar.component';
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter],
-  template: `<div class="layout-wrapper" [ngClass]="containerClass">
-        <app-topbar></app-topbar>
+  imports: [CommonModule, TopBarComponent, AppSidebar, RouterModule, AppFooter],
+  template: `
+  <div class="layout-wrapper" [ngClass]="containerClass">
+        <app-top-bar></app-top-bar>
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
             <div class="layout-main">
@@ -29,7 +30,7 @@ export class AppLayout {
 
   @ViewChild(AppSidebar) appSidebar!: AppSidebar;
 
-  @ViewChild(AppTopbar) appTopBar!: AppTopbar;
+  @ViewChild(TopBarComponent) appTopBar!: TopBarComponent;
 
   constructor(
     public layoutService: LayoutService,

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../../core/services/layout.service';
 import { RouterModule } from '@angular/router';
@@ -11,7 +11,11 @@ import { StyleClassModule } from 'primeng/styleclass';
   templateUrl: './top-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TopBarComponent {
+export class TopBarComponent implements OnInit {
+  ngOnInit() {
+    // Apply dark mode on component initialization
+    this.layoutService.toggleDarkMode();
+  }
   items!: MenuItem[];
   public layoutService = inject(LayoutService)
 

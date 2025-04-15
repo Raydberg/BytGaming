@@ -8,62 +8,12 @@ interface MenuChangeEvent {
   routeEvent?: boolean;
 }
 
+const DARK_MODE_STORAGE_KEY = 'bytgaming-dark-mode';
+
 @Injectable({
   providedIn: 'root'
 })
 export class LayoutService {
-  _config: layoutConfig = {
-    preset: 'Material',
-    primary: 'emerald',
-    surface: null,
-    darkTheme: false,
-    menuMode: 'static'
-  };
-
-  _state: LayoutState = {
-    staticMenuDesktopInactive: false,
-    overlayMenuActive: false,
-    configSidebarVisible: false,
-    staticMenuMobileActive: false,
-    menuHoverActive: false
-  };
-
-  layoutConfig = signal<layoutConfig>(this._config);
-
-  layoutState = signal<LayoutState>(this._state);
-
-  private configUpdate = new Subject<layoutConfig>();
-
-  private overlayOpen = new Subject<any>();
-
-  private menuSource = new Subject<MenuChangeEvent>();
-
-  private resetSource = new Subject();
-
-  menuSource$ = this.menuSource.asObservable();
-
-  resetSource$ = this.resetSource.asObservable();
-
-  configUpdate$ = this.configUpdate.asObservable();
-
-  overlayOpen$ = this.overlayOpen.asObservable();
-
-  theme = computed(() => (this.layoutConfig()?.darkTheme ? 'light' : 'dark'));
-
-  isSidebarActive = computed(() => this.layoutState().overlayMenuActive || this.layoutState().staticMenuMobileActive);
-
-  isDarkTheme = computed(() => this.layoutConfig().darkTheme);
-
-  getPrimary = computed(() => this.layoutConfig().primary);
-
-  getSurface = computed(() => this.layoutConfig().surface);
-
-  isOverlay = computed(() => this.layoutConfig().menuMode === 'overlay');
-
-  transitionComplete = signal<boolean>(false);
-
-  private initialized = false;
-
   constructor() {
     effect(() => {
       const config = this.layoutConfig();
@@ -81,8 +31,66 @@ export class LayoutService {
       }
 
       this.handleDarkModeTransition(config);
+
+      localStorage.setItem(DARK_MODE_STORAGE_KEY, JSON.stringify(config.darkTheme));
+      this.toggleDarkMode(this.initialConfig);
     });
   }
+
+  private getInitialDarkMode(): boolean {
+    try {
+      const storedValue = localStorage.getItem(DARK_MODE_STORAGE_KEY);
+      return storedValue ? JSON.parse(storedValue) : false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private initialConfig: layoutConfig = {
+    preset: 'Material',
+    primary: 'emerald',
+    surface: null,
+    darkTheme: this.getInitialDarkMode(),
+    menuMode: 'static'
+  };
+
+  private initialState: LayoutState = {
+    staticMenuDesktopInactive: false,
+    overlayMenuActive: false,
+    configSidebarVisible: false,
+    staticMenuMobileActive: false,
+    menuHoverActive: false
+  };
+
+  // Define signals
+  layoutConfig = signal<layoutConfig>(this.initialConfig);
+  layoutState = signal<LayoutState>(this.initialState);
+  transitionComplete = signal<boolean>(false);
+
+  // Computed values
+  theme = computed(() => (this.layoutConfig().darkTheme ? 'light' : 'dark'));
+  isSidebarActive = computed(() => this.layoutState().overlayMenuActive || this.layoutState().staticMenuMobileActive);
+  isDarkTheme = computed(() => this.layoutConfig().darkTheme);
+  getPrimary = computed(() => this.layoutConfig().primary);
+  getSurface = computed(() => this.layoutConfig().surface);
+  isOverlay = computed(() => this.layoutConfig().menuMode === 'overlay');
+  isDesktopDevice = computed(() => window.innerWidth > 991);
+  isMobileDevice = computed(() => !this.isDesktopDevice());
+
+  // Subjects for events that need to be observed
+  private configUpdate = new Subject<layoutConfig>();
+  private overlayOpen = new Subject<any>();
+  private menuSource = new Subject<MenuChangeEvent>();
+  private resetSource = new Subject<boolean>();
+
+  // Observable streams
+  menuSource$ = this.menuSource.asObservable();
+  resetSource$ = this.resetSource.asObservable();
+  configUpdate$ = this.configUpdate.asObservable();
+  overlayOpen$ = this.overlayOpen.asObservable();
+
+  private initialized = false;
+
 
   private handleDarkModeTransition(config: layoutConfig): void {
     if ((document as any).startViewTransition) {
@@ -123,17 +131,26 @@ export class LayoutService {
 
   onMenuToggle() {
     if (this.isOverlay()) {
-      this.layoutState.update((prev) => ({ ...prev, overlayMenuActive: !this.layoutState().overlayMenuActive }));
+      this.layoutState.update((prev) => ({
+        ...prev,
+        overlayMenuActive: !prev.overlayMenuActive
+      }));
 
       if (this.layoutState().overlayMenuActive) {
         this.overlayOpen.next(null);
       }
     }
 
-    if (this.isDesktop()) {
-      this.layoutState.update((prev) => ({ ...prev, staticMenuDesktopInactive: !this.layoutState().staticMenuDesktopInactive }));
+    if (this.isDesktopDevice()) {
+      this.layoutState.update((prev) => ({
+        ...prev,
+        staticMenuDesktopInactive: !prev.staticMenuDesktopInactive
+      }));
     } else {
-      this.layoutState.update((prev) => ({ ...prev, staticMenuMobileActive: !this.layoutState().staticMenuMobileActive }));
+      this.layoutState.update((prev) => ({
+        ...prev,
+        staticMenuMobileActive: !prev.staticMenuMobileActive
+      }));
 
       if (this.layoutState().staticMenuMobileActive) {
         this.overlayOpen.next(null);
@@ -142,15 +159,14 @@ export class LayoutService {
   }
 
   isDesktop() {
-    return window.innerWidth > 991;
+    return this.isDesktopDevice();
   }
 
   isMobile() {
-    return !this.isDesktop();
+    return this.isMobileDevice();
   }
 
   onConfigUpdate() {
-    this._config = { ...this.layoutConfig() };
     this.configUpdate.next(this.layoutConfig());
   }
 

@@ -9,7 +9,7 @@ import { AppMenuitem } from '../layouts/layout-admin/app.menuitem';
   standalone: true,
   imports: [CommonModule, AppMenuitem, RouterModule],
   template: `
-<ul class="layout-menu">
+    <ul class="layout-menu">
     @for (item of model(); track $index; let i = $index) {
       @if (!item.separator) {
         <li app-menuitem [item]="item" [index]="i" [root]="true"></li>

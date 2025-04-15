@@ -2,7 +2,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { PreloadAllModules, provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling, withPreloading, withViewTransitions } from '@angular/router';
-import Aura from '@primeng/themes/aura';
+import Material from '@primeng/themes/material';
 import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { provideClientHydration, withHttpTransferCacheOptions } from '@angular/platform-browser';
@@ -28,8 +28,9 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAnimationsAsync(),
     providePrimeNG({
+      ripple: true,
       theme: {
-        preset: Aura,
+        preset: Material,
         options: {
           cssLayer: {
             name: 'primeng',

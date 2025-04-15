@@ -1,5 +1,10 @@
-@use "primeicons/primeicons.css";
-@use './assets/layout/layout.scss';
+// Primero todas las directivas @use
+@use './scss/layout/layout.scss' as layout;
+
+// Luego cualquier otra regla como @import
+@import "primeicons/primeicons.css";
+
+// Configuración de capas
 @layer tailwind, primeng;
 
 @layer tailwind {

@@ -29,12 +29,23 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "/assets/",
+                "followSymlinks": true
               }
             ],
             "styles": [
               "src/styles.scss",
               "node_modules/primeicons/primeicons.css"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src"
+              ]
+            },
             "scripts": []
           },
           "configurations": {

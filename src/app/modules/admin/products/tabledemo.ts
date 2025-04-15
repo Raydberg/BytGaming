@@ -16,35 +16,35 @@ import { RippleModule } from 'primeng/ripple';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { TagModule } from 'primeng/tag';
-import { Customer, CustomerService, Representative } from '../../core/services/customer.service';
-import { Product, ProductService } from '../../core/services/product.service';
+import { Customer, CustomerService, Representative } from '../../../core/services/customer.service';
+import { ProductService, Product } from '../../../core/services/product.service';
 
 interface expandedRows {
-  [key: string]: boolean;
+    [key: string]: boolean;
 }
 
 @Component({
-  selector: 'app-table-demo',
-  standalone: true,
-  imports: [
-    TableModule,
-    MultiSelectModule,
-    SelectModule,
-    InputIconModule,
-    TagModule,
-    InputTextModule,
-    SliderModule,
-    ProgressBarModule,
-    ToggleButtonModule,
-    ToastModule,
-    CommonModule,
-    FormsModule,
-    ButtonModule,
-    RatingModule,
-    RippleModule,
-    IconFieldModule
-  ],
-  template: ` <div class="card">
+    selector: 'app-table-demo',
+    standalone: true,
+    imports: [
+        TableModule,
+        MultiSelectModule,
+        SelectModule,
+        InputIconModule,
+        TagModule,
+        InputTextModule,
+        SliderModule,
+        ProgressBarModule,
+        ToggleButtonModule,
+        ToastModule,
+        CommonModule,
+        FormsModule,
+        ButtonModule,
+        RatingModule,
+        RippleModule,
+        IconFieldModule
+    ],
+    template: ` <div class="card">
             <div class="font-semibold text-xl mb-4">Filtering</div>
             <p-table
                 #dt1
@@ -394,7 +394,7 @@ interface expandedRows {
                 </ng-template>
             </p-table>
         </div>`,
-  styles: `
+    styles: `
         .p-datatable-frozen-tbody {
             font-weight: bold;
         }
@@ -403,167 +403,167 @@ interface expandedRows {
             font-weight: bold;
         }
     `,
-  providers: [ConfirmationService, MessageService, CustomerService, ProductService]
+    providers: [ConfirmationService, MessageService, CustomerService, ProductService]
 })
 export class TableDemo implements OnInit {
-  customers1: Customer[] = [];
+    customers1: Customer[] = [];
 
-  customers2: Customer[] = [];
+    customers2: Customer[] = [];
 
-  customers3: Customer[] = [];
+    customers3: Customer[] = [];
 
-  selectedCustomers1: Customer[] = [];
+    selectedCustomers1: Customer[] = [];
 
-  selectedCustomer: Customer = {};
+    selectedCustomer: Customer = {};
 
-  representatives: Representative[] = [];
+    representatives: Representative[] = [];
 
-  statuses: any[] = [];
+    statuses: any[] = [];
 
-  products: Product[] = [];
+    products: Product[] = [];
 
-  rowGroupMetadata: any;
+    rowGroupMetadata: any;
 
-  expandedRows: expandedRows = {};
+    expandedRows: expandedRows = {};
 
-  activityValues: number[] = [0, 100];
+    activityValues: number[] = [0, 100];
 
-  isExpanded: boolean = false;
+    isExpanded: boolean = false;
 
-  balanceFrozen: boolean = false;
+    balanceFrozen: boolean = false;
 
-  loading: boolean = true;
+    loading: boolean = true;
 
-  @ViewChild('filter') filter!: ElementRef;
+    @ViewChild('filter') filter!: ElementRef;
 
-  constructor(
-    private customerService: CustomerService,
-    private productService: ProductService
-  ) { }
+    constructor(
+        private customerService: CustomerService,
+        private productService: ProductService
+    ) {}
 
-  ngOnInit() {
-    this.customerService.getCustomersLarge().then((customers) => {
-      this.customers1 = customers;
-      this.loading = false;
+    ngOnInit() {
+        this.customerService.getCustomersLarge().then((customers) => {
+            this.customers1 = customers;
+            this.loading = false;
 
-      // @ts-ignore
-      this.customers1.forEach((customer) => (customer.date = new Date(customer.date)));
-    });
-    this.customerService.getCustomersMedium().then((customers) => (this.customers2 = customers));
-    this.customerService.getCustomersLarge().then((customers) => (this.customers3 = customers));
-    this.productService.getProductsWithOrdersSmall().then((data) => (this.products = data));
+            // @ts-ignore
+            this.customers1.forEach((customer) => (customer.date = new Date(customer.date)));
+        });
+        this.customerService.getCustomersMedium().then((customers) => (this.customers2 = customers));
+        this.customerService.getCustomersLarge().then((customers) => (this.customers3 = customers));
+        this.productService.getProductsWithOrdersSmall().then((data) => (this.products = data));
 
-    this.representatives = [
-      { name: 'Amy Elsner', image: 'amyelsner.png' },
-      { name: 'Anna Fali', image: 'annafali.png' },
-      { name: 'Asiya Javayant', image: 'asiyajavayant.png' },
-      { name: 'Bernardo Dominic', image: 'bernardodominic.png' },
-      { name: 'Elwin Sharvill', image: 'elwinsharvill.png' },
-      { name: 'Ioni Bowcher', image: 'ionibowcher.png' },
-      { name: 'Ivan Magalhaes', image: 'ivanmagalhaes.png' },
-      { name: 'Onyama Limba', image: 'onyamalimba.png' },
-      { name: 'Stephen Shaw', image: 'stephenshaw.png' },
-      { name: 'XuXue Feng', image: 'xuxuefeng.png' }
-    ];
+        this.representatives = [
+            { name: 'Amy Elsner', image: 'amyelsner.png' },
+            { name: 'Anna Fali', image: 'annafali.png' },
+            { name: 'Asiya Javayant', image: 'asiyajavayant.png' },
+            { name: 'Bernardo Dominic', image: 'bernardodominic.png' },
+            { name: 'Elwin Sharvill', image: 'elwinsharvill.png' },
+            { name: 'Ioni Bowcher', image: 'ionibowcher.png' },
+            { name: 'Ivan Magalhaes', image: 'ivanmagalhaes.png' },
+            { name: 'Onyama Limba', image: 'onyamalimba.png' },
+            { name: 'Stephen Shaw', image: 'stephenshaw.png' },
+            { name: 'XuXue Feng', image: 'xuxuefeng.png' }
+        ];
 
-    this.statuses = [
-      { label: 'Unqualified', value: 'unqualified' },
-      { label: 'Qualified', value: 'qualified' },
-      { label: 'New', value: 'new' },
-      { label: 'Negotiation', value: 'negotiation' },
-      { label: 'Renewal', value: 'renewal' },
-      { label: 'Proposal', value: 'proposal' }
-    ];
-  }
+        this.statuses = [
+            { label: 'Unqualified', value: 'unqualified' },
+            { label: 'Qualified', value: 'qualified' },
+            { label: 'New', value: 'new' },
+            { label: 'Negotiation', value: 'negotiation' },
+            { label: 'Renewal', value: 'renewal' },
+            { label: 'Proposal', value: 'proposal' }
+        ];
+    }
 
-  onSort() {
-    this.updateRowGroupMetaData();
-  }
+    onSort() {
+        this.updateRowGroupMetaData();
+    }
 
-  updateRowGroupMetaData() {
-    this.rowGroupMetadata = {};
+    updateRowGroupMetaData() {
+        this.rowGroupMetadata = {};
 
-    if (this.customers3) {
-      for (let i = 0; i < this.customers3.length; i++) {
-        const rowData = this.customers3[i];
-        const representativeName = rowData?.representative?.name || '';
+        if (this.customers3) {
+            for (let i = 0; i < this.customers3.length; i++) {
+                const rowData = this.customers3[i];
+                const representativeName = rowData?.representative?.name || '';
 
-        if (i === 0) {
-          this.rowGroupMetadata[representativeName] = { index: 0, size: 1 };
+                if (i === 0) {
+                    this.rowGroupMetadata[representativeName] = { index: 0, size: 1 };
+                } else {
+                    const previousRowData = this.customers3[i - 1];
+                    const previousRowGroup = previousRowData?.representative?.name;
+                    if (representativeName === previousRowGroup) {
+                        this.rowGroupMetadata[representativeName].size++;
+                    } else {
+                        this.rowGroupMetadata[representativeName] = { index: i, size: 1 };
+                    }
+                }
+            }
+        }
+    }
+
+    expandAll() {
+        if (!this.isExpanded) {
+            this.products.forEach((product) => (product && product.name ? (this.expandedRows[product.name] = true) : ''));
         } else {
-          const previousRowData = this.customers3[i - 1];
-          const previousRowGroup = previousRowData?.representative?.name;
-          if (representativeName === previousRowGroup) {
-            this.rowGroupMetadata[representativeName].size++;
-          } else {
-            this.rowGroupMetadata[representativeName] = { index: i, size: 1 };
-          }
+            this.expandedRows = {};
         }
-      }
+        this.isExpanded = !this.isExpanded;
     }
-  }
 
-  expandAll() {
-    if (!this.isExpanded) {
-      this.products.forEach((product) => (product && product.name ? (this.expandedRows[product.name] = true) : ''));
-    } else {
-      this.expandedRows = {};
+    formatCurrency(value: number) {
+        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
     }
-    this.isExpanded = !this.isExpanded;
-  }
 
-  formatCurrency(value: number) {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  }
-
-  onGlobalFilter(table: Table, event: Event) {
-    table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
-  }
-
-  clear(table: Table) {
-    table.clear();
-    this.filter.nativeElement.value = '';
-  }
-
-  getSeverity(status: string) {
-    switch (status) {
-      case 'qualified':
-      case 'instock':
-      case 'INSTOCK':
-      case 'DELIVERED':
-      case 'delivered':
-        return 'success';
-
-      case 'negotiation':
-      case 'lowstock':
-      case 'LOWSTOCK':
-      case 'PENDING':
-      case 'pending':
-        return 'warn';
-
-      case 'unqualified':
-      case 'outofstock':
-      case 'OUTOFSTOCK':
-      case 'CANCELLED':
-      case 'cancelled':
-        return 'danger';
-
-      default:
-        return 'info';
+    onGlobalFilter(table: Table, event: Event) {
+        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
-  }
 
-  calculateCustomerTotal(name: string) {
-    let total = 0;
+    clear(table: Table) {
+        table.clear();
+        this.filter.nativeElement.value = '';
+    }
 
-    if (this.customers2) {
-      for (let customer of this.customers2) {
-        if (customer.representative?.name === name) {
-          total++;
+    getSeverity(status: string) {
+        switch (status) {
+            case 'qualified':
+            case 'instock':
+            case 'INSTOCK':
+            case 'DELIVERED':
+            case 'delivered':
+                return 'success';
+
+            case 'negotiation':
+            case 'lowstock':
+            case 'LOWSTOCK':
+            case 'PENDING':
+            case 'pending':
+                return 'warn';
+
+            case 'unqualified':
+            case 'outofstock':
+            case 'OUTOFSTOCK':
+            case 'CANCELLED':
+            case 'cancelled':
+                return 'danger';
+
+            default:
+                return 'info';
         }
-      }
     }
 
-    return total;
-  }
+    calculateCustomerTotal(name: string) {
+        let total = 0;
+
+        if (this.customers2) {
+            for (let customer of this.customers2) {
+                if (customer.representative?.name === name) {
+                    total++;
+                }
+            }
+        }
+
+        return total;
+    }
 }

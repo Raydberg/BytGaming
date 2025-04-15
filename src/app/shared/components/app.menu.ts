@@ -28,7 +28,7 @@ export class AppMenu {
       {
         items: [
           { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/admin'] },
-          { label: 'Table', icon: 'pi pi-fw pi-table', routerLink: ['/uikit/table'] },
+          { label: 'Table', icon: 'pi pi-fw pi-table', routerLink: ['/admin/products'] },
           { label: 'List', icon: 'pi pi-fw pi-list', routerLink: ['/uikit/list'] },
           { label: 'Tree', icon: 'pi pi-fw pi-share-alt', routerLink: ['/uikit/tree'] },
           { label: 'Overlay', icon: 'pi pi-fw pi-clone', routerLink: ['/uikit/overlay'] },
@@ -38,7 +38,7 @@ export class AppMenu {
           { label: 'File', icon: 'pi pi-fw pi-file', routerLink: ['/uikit/file'] },
           { label: 'Chart', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/uikit/charts'] },
           { label: 'Misc', icon: 'pi pi-fw pi-circle', routerLink: ['/uikit/misc'] },
-          { label: 'Crud', icon: 'pi pi-fw pi-pencil', routerLink: ['/pages/crud'] },
+          { label: 'Crud', icon: 'pi pi-fw pi-pencil', routerLink: ['/admin/categories'] },
           { label: 'Pages', icon: 'pi pi-fw pi-briefcase', routerLink: ['/pages'], },
         ]
       }

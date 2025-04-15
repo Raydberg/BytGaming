@@ -2,14 +2,14 @@ import { Component, Renderer2, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
-import { AppSidebar } from './app.sidebar';
-import { AppFooter } from './app.footer';
+import { SidebarComponent } from '../../components/app.sidebar';
 import { LayoutService } from '../../../core/services/layout.service';
 import { TopBarComponent } from '../../components/top-bar/top-bar.component';
+import { FooterComponent } from '../../components/footer/footer.component';
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, TopBarComponent, AppSidebar, RouterModule, AppFooter],
+  imports: [CommonModule, TopBarComponent, SidebarComponent, RouterModule, FooterComponent],
   template: `
   <div class="layout-wrapper" [ngClass]="containerClass">
         <app-top-bar></app-top-bar>
@@ -28,7 +28,7 @@ export class AppLayout {
 
   menuOutsideClickListener: any;
 
-  @ViewChild(AppSidebar) appSidebar!: AppSidebar;
+  @ViewChild(SidebarComponent) appSidebar!: SidebarComponent;
 
   @ViewChild(TopBarComponent) appTopBar!: TopBarComponent;
 

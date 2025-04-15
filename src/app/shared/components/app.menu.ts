@@ -2,12 +2,11 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { AppMenuitem } from '../layouts/layout-admin/app.menuitem';
+import { MenuItemComponent } from './menu-item/menu-item.component';
 
 @Component({
   selector: 'app-menu',
-  standalone: true,
-  imports: [CommonModule, AppMenuitem, RouterModule],
+  imports: [CommonModule, MenuItemComponent, RouterModule],
   template: `
     <ul class="layout-menu">
     @for (item of model(); track $index; let i = $index) {

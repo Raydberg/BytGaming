@@ -4,7 +4,6 @@ import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-notfound',
-  standalone: true,
   imports: [RouterModule, ButtonModule],
   templateUrl: "./not-found.html"
 })

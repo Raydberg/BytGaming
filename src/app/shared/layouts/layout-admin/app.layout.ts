@@ -16,9 +16,9 @@ import { FooterComponent } from '../../components/footer/footer.component';
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
             <div class="layout-main">
-                <router-outlet></router-outlet>
+                <router-outlet/>
             </div>
-            <app-footer></app-footer>
+            <app-footer/>
         </div>
         <div class="layout-mask animate-fadein"></div>
     </div> `

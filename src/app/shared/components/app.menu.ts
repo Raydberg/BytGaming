@@ -27,7 +27,7 @@ export class AppMenu {
     this.model.set([
       {
         items: [
-          { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
+          { label: 'Home', icon: 'pi pi-fw pi-home', routerLink: ['/admin'] },
           { label: 'Table', icon: 'pi pi-fw pi-table', routerLink: ['/uikit/table'] },
           { label: 'List', icon: 'pi pi-fw pi-list', routerLink: ['/uikit/list'] },
           { label: 'Tree', icon: 'pi pi-fw pi-share-alt', routerLink: ['/uikit/tree'] },

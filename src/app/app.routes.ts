@@ -8,7 +8,8 @@ export const routes: Routes = [
     path: 'admin',
     component: AppLayout,
     children: [
-      { path: 'pages', loadChildren: () => import('../app/modules/pages.routes') }
+      { path: '', loadChildren: () => import('../app/modules/admin/admin.routes') },
+
     ]
   },
   { path: '', component: Landing },

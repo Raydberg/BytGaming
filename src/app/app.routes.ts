@@ -1,19 +1,16 @@
 import { Routes } from '@angular/router';
 import { AppLayout } from './shared/layouts/layout-admin/app.layout';
-import { Landing } from './modules/landing/landing';
 import { Notfound } from './shared/components/notfound/notfound';
 
 export const routes: Routes = [
+  { path: '', loadChildren: () => import('../app/modules/auth/auth.routes') },
   {
     path: 'admin',
     component: AppLayout,
     children: [
       { path: '', loadChildren: () => import('../app/modules/admin/admin.routes') },
-
     ]
   },
-  { path: '', component: Landing },
   { path: 'notfound', component: Notfound },
-  { path: 'auth', loadChildren: () => import('../app/modules/auth/auth.routes') },
   { path: '**', redirectTo: '/notfound' }
 ];

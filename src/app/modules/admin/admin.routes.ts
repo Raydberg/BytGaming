@@ -7,5 +7,6 @@ export default [
   { path: "", component: Dashboard },
   { path: "products", component: TableDemo },
   { path: "categories", component: Crud },
+  { path: "users", loadChildren: () => import("./users/user.routes") },
   { path: '**', redirectTo: '/notfound' }
 ] as Routes;

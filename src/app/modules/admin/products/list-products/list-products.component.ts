@@ -1,9 +1,10 @@
+
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'app-register',
+  selector: 'list-products',
   imports: [],
-  templateUrl: './register.component.html',
+  templateUrl: './list-products.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegisterComponent { }
+export class ListProductsComponent { }

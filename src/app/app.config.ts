@@ -7,6 +7,7 @@ import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { provideClientHydration, withHttpTransferCacheOptions } from '@angular/platform-browser';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import {MessageService} from 'primeng/api';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,6 +29,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor])
     ),
     provideAnimationsAsync(),
+    MessageService,
     providePrimeNG({
       ripple: true,
       theme: {

@@ -31,8 +31,8 @@ import { CommonModule } from '@angular/common';
                     </a>
                 </li>
                 <li>
-                    <a (click)="router.navigate([''], { fragment: 'features' })" pRipple class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                        <span>Features</span>
+                    <a (click)="router.navigate(['/product'], { fragment: 'features' })" pRipple class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
+                        <span>Productos</span>
                     </a>
                 </li>
                 <li>

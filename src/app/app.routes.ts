@@ -3,7 +3,8 @@ import { AppLayout } from './shared/layouts/layout-admin/app.layout';
 import { Notfound } from './shared/components/notfound/notfound';
 
 export const routes: Routes = [
-  { path: '', loadChildren: () => import('../app/modules/auth/auth.routes') },
+  { path: '', loadChildren: () => import("./modules/client.routes") },
+  { path: 'auth', loadChildren: () => import("./modules/auth/auth.routes") },
   {
     path: 'admin',
     component: AppLayout,

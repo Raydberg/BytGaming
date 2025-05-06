@@ -1,24 +1,25 @@
-import {ChangeDetectionStrategy, Component, signal, ViewChild} from '@angular/core';
-import {MessageService, ConfirmationService} from 'primeng/api';
-import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../core/services/product.service';
-import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
-import {ButtonModule} from 'primeng/button';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {DialogModule} from 'primeng/dialog';
-import {IconFieldModule} from 'primeng/iconfield';
-import {InputIconModule} from 'primeng/inputicon';
-import {InputNumberModule} from 'primeng/inputnumber';
-import {InputTextModule} from 'primeng/inputtext';
-import {RadioButtonModule} from 'primeng/radiobutton';
-import {RatingModule} from 'primeng/rating';
-import {RippleModule} from 'primeng/ripple';
-import {SelectModule} from 'primeng/select';
-import {TagModule} from 'primeng/tag';
-import {TextareaModule} from 'primeng/textarea';
-import {ToastModule} from 'primeng/toast';
-import {ToolbarModule} from 'primeng/toolbar';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild } from '@angular/core';
+import { MessageService, ConfirmationService } from 'primeng/api';
+import { Table, TableModule } from 'primeng/table';
+import { Product, ProductService } from '../../../core/services/product.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { RatingModule } from 'primeng/rating';
+import { RippleModule } from 'primeng/ripple';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
+import { ToastModule } from 'primeng/toast';
+import { ToolbarModule } from 'primeng/toolbar';
+import { AdminStaffService } from '../../../core/services/admin/admin-staff.service';
 
 interface Column {
   field: string;
@@ -58,6 +59,8 @@ interface ExportColumn {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StaffComponent {
+  private staff = inject(AdminStaffService)
+  
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);
@@ -97,20 +100,20 @@ export class StaffComponent {
     });
 
     this.statuses = [
-      {label: 'INSTOCK', value: 'instock'},
-      {label: 'LOWSTOCK', value: 'lowstock'},
-      {label: 'OUTOFSTOCK', value: 'outofstock'}
+      { label: 'INSTOCK', value: 'instock' },
+      { label: 'LOWSTOCK', value: 'lowstock' },
+      { label: 'OUTOFSTOCK', value: 'outofstock' }
     ];
 
     this.cols = [
-      {field: 'code', header: 'Code', customExportHeader: 'Product Code'},
-      {field: 'name', header: 'Name'},
-      {field: 'image', header: 'Image'},
-      {field: 'price', header: 'Price'},
-      {field: 'category', header: 'Category'}
+      { field: 'code', header: 'Code', customExportHeader: 'Product Code' },
+      { field: 'name', header: 'Name' },
+      { field: 'image', header: 'Image' },
+      { field: 'price', header: 'Price' },
+      { field: 'category', header: 'Category' }
     ];
 
-    this.exportColumns = this.cols.map((col) => ({title: col.header, dataKey: col.field}));
+    this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
   }
 
   onGlobalFilter(table: Table, event: Event) {
@@ -124,7 +127,7 @@ export class StaffComponent {
   }
 
   editProduct(product: Product) {
-    this.product = {...product};
+    this.product = { ...product };
     this.productDialog = true;
   }
 

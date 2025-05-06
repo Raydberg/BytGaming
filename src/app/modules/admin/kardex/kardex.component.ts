@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, signal, ViewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal, ViewChild} from '@angular/core';
 import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Button, ButtonModule} from 'primeng/button';
@@ -19,6 +19,7 @@ import {Toolbar, ToolbarModule} from 'primeng/toolbar';
 import {Table, TableModule} from 'primeng/table';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import {Product, ProductService} from '../../../core/services/product.service';
+import { AdminKardexService } from '../../../core/services/admin/admin-kardex.service';
 
 interface Column {
   field: string;
@@ -58,6 +59,7 @@ interface ExportColumn {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KardexComponent {
+  private kardexService = inject(AdminKardexService)
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);

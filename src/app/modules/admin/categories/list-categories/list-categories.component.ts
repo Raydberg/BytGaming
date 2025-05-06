@@ -1,24 +1,25 @@
-import {ChangeDetectionStrategy, Component, signal, ViewChild} from '@angular/core';
-import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {Button, ButtonModule} from 'primeng/button';
-import {ConfirmDialog, ConfirmDialogModule} from 'primeng/confirmdialog';
-import {Dialog, DialogModule} from 'primeng/dialog';
-import {IconField, IconFieldModule} from 'primeng/iconfield';
-import {InputIcon, InputIconModule} from 'primeng/inputicon';
-import {InputNumber, InputNumberModule} from 'primeng/inputnumber';
-import {InputText, InputTextModule} from 'primeng/inputtext';
-import {RadioButton, RadioButtonModule} from 'primeng/radiobutton';
-import {Rating, RatingModule} from 'primeng/rating';
-import {RippleModule} from 'primeng/ripple';
-import {Select, SelectModule} from 'primeng/select';
-import {Tag, TagModule} from 'primeng/tag';
-import {Textarea, TextareaModule} from 'primeng/textarea';
-import {ToastModule} from 'primeng/toast';
-import {Toolbar, ToolbarModule} from 'primeng/toolbar';
-import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../../core/services/product.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild } from '@angular/core';
+import { CommonModule, CurrencyPipe, NgIf } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Button, ButtonModule } from 'primeng/button';
+import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
+import { Dialog, DialogModule } from 'primeng/dialog';
+import { IconField, IconFieldModule } from 'primeng/iconfield';
+import { InputIcon, InputIconModule } from 'primeng/inputicon';
+import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
+import { InputText, InputTextModule } from 'primeng/inputtext';
+import { RadioButton, RadioButtonModule } from 'primeng/radiobutton';
+import { Rating, RatingModule } from 'primeng/rating';
+import { RippleModule } from 'primeng/ripple';
+import { Select, SelectModule } from 'primeng/select';
+import { Tag, TagModule } from 'primeng/tag';
+import { Textarea, TextareaModule } from 'primeng/textarea';
+import { ToastModule } from 'primeng/toast';
+import { Toolbar, ToolbarModule } from 'primeng/toolbar';
+import { Table, TableModule } from 'primeng/table';
+import { Product, ProductService } from '../../../../core/services/product.service';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { AdminCategoryService } from '../../../../core/services/admin/admin-category.service';
 
 interface Column {
   field: string;
@@ -58,6 +59,8 @@ interface ExportColumn {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListCategoriesComponent {
+
+  private categoryService = inject(AdminCategoryService)
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);
@@ -83,9 +86,6 @@ export class ListCategoriesComponent {
   ) {
   }
 
-  exportCSV() {
-    this.dt.exportCSV();
-  }
 
   ngOnInit() {
     this.loadDemoData();
@@ -97,20 +97,20 @@ export class ListCategoriesComponent {
     });
 
     this.statuses = [
-      {label: 'INSTOCK', value: 'instock'},
-      {label: 'LOWSTOCK', value: 'lowstock'},
-      {label: 'OUTOFSTOCK', value: 'outofstock'}
+      { label: 'INSTOCK', value: 'instock' },
+      { label: 'LOWSTOCK', value: 'lowstock' },
+      { label: 'OUTOFSTOCK', value: 'outofstock' }
     ];
 
     this.cols = [
-      {field: 'code', header: 'Code', customExportHeader: 'Product Code'},
-      {field: 'name', header: 'Name'},
-      {field: 'image', header: 'Image'},
-      {field: 'price', header: 'Price'},
-      {field: 'category', header: 'Category'}
+      { field: 'code', header: 'Code', customExportHeader: 'Product Code' },
+      { field: 'name', header: 'Name' },
+      { field: 'image', header: 'Image' },
+      { field: 'price', header: 'Price' },
+      { field: 'category', header: 'Category' }
     ];
 
-    this.exportColumns = this.cols.map((col) => ({title: col.header, dataKey: col.field}));
+    this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
   }
 
   onGlobalFilter(table: Table, event: Event) {
@@ -124,7 +124,7 @@ export class ListCategoriesComponent {
   }
 
   editProduct(product: Product) {
-    this.product = {...product};
+    this.product = { ...product };
     this.productDialog = true;
   }
 

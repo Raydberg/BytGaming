@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, signal, ViewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal, ViewChild} from '@angular/core';
 import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Button, ButtonModule} from 'primeng/button';
@@ -19,6 +19,8 @@ import {Toolbar, ToolbarModule} from 'primeng/toolbar';
 import {Table, TableModule} from 'primeng/table';
 import {Product, ProductService} from '../../../../core/services/product.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
+import { AdminProductService } from '../../../../core/services/admin/admin-product.service';
+import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
 
 interface Column {
   field: string;
@@ -51,13 +53,15 @@ interface ExportColumn {
     TagModule,
     InputIconModule,
     IconFieldModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    CurrencyFormatPipe
   ],
   providers: [ProductService, MessageService, ConfirmationService],
   templateUrl: './list-products.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListProductsComponent {
+  private productsService = inject(AdminProductService)
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);

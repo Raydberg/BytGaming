@@ -17,8 +17,8 @@ import {Textarea, TextareaModule} from 'primeng/textarea';
 import {ToastModule} from 'primeng/toast';
 import {Toolbar, ToolbarModule} from 'primeng/toolbar';
 import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../../core/services/product.service';
 import {ConfirmationService, MessageService} from 'primeng/api';
+import {Product, ProductService} from '../../../core/services/product.service';
 
 interface Column {
   field: string;
@@ -32,7 +32,7 @@ interface ExportColumn {
 }
 
 @Component({
-  selector: 'app-list-users',
+  selector: 'app-kardex',
   imports: [
     CommonModule,
     TableModule,
@@ -54,10 +54,10 @@ interface ExportColumn {
     ConfirmDialogModule
   ],
   providers: [ProductService, MessageService, ConfirmationService],
-  templateUrl: './list-users.component.html',
+  templateUrl: './kardex.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListUsersComponent {
+export class KardexComponent {
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);

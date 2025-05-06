@@ -1,24 +1,24 @@
 import {ChangeDetectionStrategy, Component, signal, ViewChild} from '@angular/core';
-import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {Button, ButtonModule} from 'primeng/button';
-import {ConfirmDialog, ConfirmDialogModule} from 'primeng/confirmdialog';
-import {Dialog, DialogModule} from 'primeng/dialog';
-import {IconField, IconFieldModule} from 'primeng/iconfield';
-import {InputIcon, InputIconModule} from 'primeng/inputicon';
-import {InputNumber, InputNumberModule} from 'primeng/inputnumber';
-import {InputText, InputTextModule} from 'primeng/inputtext';
-import {RadioButton, RadioButtonModule} from 'primeng/radiobutton';
-import {Rating, RatingModule} from 'primeng/rating';
-import {RippleModule} from 'primeng/ripple';
-import {Select, SelectModule} from 'primeng/select';
-import {Tag, TagModule} from 'primeng/tag';
-import {Textarea, TextareaModule} from 'primeng/textarea';
-import {ToastModule} from 'primeng/toast';
-import {Toolbar, ToolbarModule} from 'primeng/toolbar';
+import {MessageService, ConfirmationService} from 'primeng/api';
 import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../../core/services/product.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import {Product, ProductService} from '../../../core/services/product.service';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {ButtonModule} from 'primeng/button';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {DialogModule} from 'primeng/dialog';
+import {IconFieldModule} from 'primeng/iconfield';
+import {InputIconModule} from 'primeng/inputicon';
+import {InputNumberModule} from 'primeng/inputnumber';
+import {InputTextModule} from 'primeng/inputtext';
+import {RadioButtonModule} from 'primeng/radiobutton';
+import {RatingModule} from 'primeng/rating';
+import {RippleModule} from 'primeng/ripple';
+import {SelectModule} from 'primeng/select';
+import {TagModule} from 'primeng/tag';
+import {TextareaModule} from 'primeng/textarea';
+import {ToastModule} from 'primeng/toast';
+import {ToolbarModule} from 'primeng/toolbar';
 
 interface Column {
   field: string;
@@ -32,7 +32,7 @@ interface ExportColumn {
 }
 
 @Component({
-  selector: 'app-list-users',
+  selector: 'admin-staff',
   imports: [
     CommonModule,
     TableModule,
@@ -54,10 +54,10 @@ interface ExportColumn {
     ConfirmDialogModule
   ],
   providers: [ProductService, MessageService, ConfirmationService],
-  templateUrl: './list-users.component.html',
+  templateUrl: './staff.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListUsersComponent {
+export class StaffComponent {
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);
@@ -233,4 +233,3 @@ export class ListUsersComponent {
     }
   }
 }
-

@@ -1,4 +1,7 @@
 import {ChangeDetectionStrategy, Component, signal, ViewChild} from '@angular/core';
+import {MessageService, ConfirmationService} from 'primeng/api';
+import {Table, TableModule} from 'primeng/table';
+import {Product, ProductService} from '../../../core/services/product.service';
 import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Button, ButtonModule} from 'primeng/button';
@@ -16,9 +19,7 @@ import {Tag, TagModule} from 'primeng/tag';
 import {Textarea, TextareaModule} from 'primeng/textarea';
 import {ToastModule} from 'primeng/toast';
 import {Toolbar, ToolbarModule} from 'primeng/toolbar';
-import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../../core/services/product.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+
 
 interface Column {
   field: string;
@@ -32,7 +33,7 @@ interface ExportColumn {
 }
 
 @Component({
-  selector: 'app-list-users',
+  selector: 'admin-supplier',
   imports: [
     CommonModule,
     TableModule,
@@ -54,10 +55,10 @@ interface ExportColumn {
     ConfirmDialogModule
   ],
   providers: [ProductService, MessageService, ConfirmationService],
-  templateUrl: './list-users.component.html',
+  templateUrl: './supplier.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListUsersComponent {
+export class SupplierComponent {
   productDialog: boolean = false;
 
   products = signal<Product[]>([]);
@@ -233,4 +234,3 @@ export class ListUsersComponent {
     }
   }
 }
-

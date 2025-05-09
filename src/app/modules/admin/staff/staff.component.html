@@ -1,44 +1,49 @@
 <p-toolbar styleClass="mb-6">
-  <ng-template #start>
+  <ng-template pTemplate="start">
     <p-button
       label="New"
       icon="pi pi-plus"
       severity="secondary"
       class="mr-2"
       (onClick)="openNew()"
+      [disabled]="loading()"
     />
     <p-button
       severity="secondary"
       label="Delete"
       icon="pi pi-trash"
       outlined
-      (onClick)="deleteSelectedProducts()"
-      [disabled]="!selectedProducts || !selectedProducts.length"
+      (onClick)="deleteSelectedStaff()"
+      [disabled]="!selectedStaff || !selectedStaff.length || loading()"
     />
   </ng-template>
 </p-toolbar>
 
+<!-- Show skeleton during loading -->
+<table-skeleton
+  *ngIf="loading()"
+  [rowCount]="5"
+  [columnCount]="6"
+></table-skeleton>
+
+<!-- Show actual table when not loading -->
 <p-table
   #dt
-  [value]="products()"
+  *ngIf="!loading()"
+  [value]="staff()"
   [rows]="10"
   [columns]="cols"
   [paginator]="true"
-  [globalFilterFields]="[
-    'name',
-    'country.name',
-    'representative.name',
-    'status'
-  ]"
+  [globalFilterFields]="['name', 'email', 'post']"
   [tableStyle]="{ 'min-width': '75rem' }"
-  [(selection)]="selectedProducts"
+  [(selection)]="selectedStaff"
   [rowHover]="true"
   dataKey="id"
-  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} staff members"
   [showCurrentPageReport]="true"
   [rowsPerPageOptions]="[10, 20, 30]"
 >
-  <ng-template #caption>
+  <ng-template pTemplate="caption">
     <div class="flex items-center justify-between">
       <h5 class="m-0">Administrador de Personal</h5>
       <p-iconfield>
@@ -52,202 +57,154 @@
       </p-iconfield>
     </div>
   </ng-template>
-  <ng-template #header>
+  <ng-template pTemplate="header">
     <tr>
       <th style="width: 3rem">
         <p-tableHeaderCheckbox />
       </th>
-      <th style="min-width: 16rem">Id</th>
+      <th pSortableColumn="id" style="min-width: 5rem">
+        ID
+        <p-sortIcon field="id" />
+      </th>
       <th pSortableColumn="name" style="min-width: 16rem">
         Name
         <p-sortIcon field="name" />
       </th>
-      <th>Email</th>
-      <th pSortableColumn="price" style="min-width: 8rem">
-        Post
-        <p-sortIcon field="price" />
+      <th pSortableColumn="email" style="min-width: 16rem">
+        Email
+        <p-sortIcon field="email" />
       </th>
-      <th pSortableColumn="price" style="min-width: 8rem">
-        Acciones
-        <p-sortIcon field="price" />
+      <th pSortableColumn="post" style="min-width: 10rem">
+        Position
+        <p-sortIcon field="post" />
       </th>
-      <th style="min-width: 12rem"></th>
+      <th style="min-width: 10rem">Actions</th>
     </tr>
   </ng-template>
-  <ng-template #body let-product>
+  <ng-template pTemplate="body" let-staffMember>
     <tr>
       <td style="width: 3rem">
-        <p-tableCheckbox [value]="product" />
+        <p-tableCheckbox [value]="staffMember" />
       </td>
-      <td style="min-width: 12rem">{{ product.code }}</td>
-      <td style="min-width: 16rem">{{ product.name }}</td>
-
-
-      <td>
-        <p-rating [(ngModel)]="product.rating" [readonly]="true" />
-      </td>
-      <td>
+      <td style="min-width: 5rem">{{ staffMember.id }}</td>
+      <td style="min-width: 16rem">{{ staffMember.name }}</td>
+      <td style="min-width: 16rem">{{ staffMember.email }}</td>
+      <td style="min-width: 10rem">
         <p-tag
-          [value]="product.inventoryStatus"
-          [severity]="getSeverity(product.inventoryStatus)"
+          [value]="staffMember.post"
+          [severity]="getPostSeverity(staffMember.post)"
         />
       </td>
       <td>
-        <p-button
-          icon="pi pi-pencil"
-          class="mr-2"
-          [rounded]="true"
-          [outlined]="true"
-          (click)="editProduct(product)"
-        />
-        <p-button
-          icon="pi pi-trash"
-          severity="danger"
-          [rounded]="true"
-          [outlined]="true"
-          (click)="deleteProduct(product)"
-        />
+        <div class="flex">
+          <p-button
+            icon="pi pi-pencil"
+            class="mr-2"
+            [rounded]="true"
+            [outlined]="true"
+            (click)="editStaff(staffMember)"
+            [disabled]="loading()"
+          />
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [outlined]="true"
+            (click)="deleteStaff(staffMember)"
+            class="mr-2"
+            [disabled]="loading()"
+          />
+        </div>
       </td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="6" class="text-center p-4">No staff members found.</td>
     </tr>
   </ng-template>
 </p-table>
 
-
-<!-- Dialogs -->
-
-
-
-
-
-
+<!-- Dialog for adding/editing staff -->
 <p-dialog
-  [(visible)]="productDialog"
+  [(visible)]="staffDialog"
   [style]="{ width: '450px' }"
-  header="Product Details"
+  [header]="staffMember.id ? 'Edit Staff Member' : 'New Staff Member'"
   [modal]="true"
+  [closable]="!loading()"
+  [closeOnEscape]="!loading()"
+  styleClass="p-fluid"
 >
-  <ng-template #content>
-    <div class="flex flex-col gap-6">
-      <img
-        [src]="
-          'https://primefaces.org/cdn/primeng/images/demo/product/' +
-          product.image
-        "
-        [alt]="product.image"
-        class="block m-auto pb-4"
-        *ngIf="product.image"
-      />
-      <div>
-        <label for="name" class="block font-bold mb-3">Name</label>
+  <ng-template pTemplate="content">
+    <div class="flex flex-col gap-4">
+      <div class="field">
+        <label for="name" class="block font-bold mb-2">Name</label>
         <input
           type="text"
           pInputText
           id="name"
-          [(ngModel)]="product.name"
+          [(ngModel)]="staffRequest.name"
           required
           autofocus
-          fluid
+          class="w-full"
+          [disabled]="loading()"
         />
-        <small class="text-red-500" *ngIf="submitted && !product.name"
+        <small class="text-red-500" *ngIf="submitted && !staffRequest.name"
           >Name is required.</small
         >
       </div>
-      <div>
-        <label for="description" class="block font-bold mb-3"
-          >Description</label
-        >
-        <textarea
-          id="description"
-          pTextarea
-          [(ngModel)]="product.description"
+
+      <div class="field">
+        <label for="email" class="block font-bold mb-2">Email</label>
+        <input
+          type="email"
+          pInputText
+          id="email"
+          [(ngModel)]="staffRequest.email"
           required
-          rows="3"
-          cols="20"
-          fluid
-        ></textarea>
-      </div>
-
-      <div>
-        <label for="inventoryStatus" class="block font-bold mb-3"
-          >Inventory Status</label
-        >
-        <p-select
-          [(ngModel)]="product.inventoryStatus"
-          inputId="inventoryStatus"
-          [options]="statuses"
-          optionLabel="label"
-          optionValue="label"
-          placeholder="Select a Status"
-          fluid
+          class="w-full"
+          [disabled]="loading()"
         />
+        <small class="text-red-500" *ngIf="submitted && !staffRequest.email"
+          >Email is required.</small
+        >
       </div>
 
-      <div>
-        <span class="block font-bold mb-4">Category</span>
-        <div class="grid grid-cols-12 gap-4">
-          <div class="flex items-center gap-2 col-span-6">
-            <p-radiobutton
-              id="category1"
-              name="category"
-              value="Accessories"
-              [(ngModel)]="product.category"
-            />
-            <label for="category1">Accessories</label>
-          </div>
-          <div class="flex items-center gap-2 col-span-6">
-            <p-radiobutton
-              id="category2"
-              name="category"
-              value="Clothing"
-              [(ngModel)]="product.category"
-            />
-            <label for="category2">Clothing</label>
-          </div>
-          <div class="flex items-center gap-2 col-span-6">
-            <p-radiobutton
-              id="category3"
-              name="category"
-              value="Electronics"
-              [(ngModel)]="product.category"
-            />
-            <label for="category3">Electronics</label>
-          </div>
-          <div class="flex items-center gap-2 col-span-6">
-            <p-radiobutton
-              id="category4"
-              name="category"
-              value="Fitness"
-              [(ngModel)]="product.category"
-            />
-            <label for="category4">Fitness</label>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-12 gap-4">
-        <div class="col-span-6">
-          <label for="price" class="block font-bold mb-3">Price</label>
-          <p-inputnumber
-            id="price"
-            [(ngModel)]="product.price"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
-            fluid
-          />
-        </div>
-        <div class="col-span-6">
-          <label for="quantity" class="block font-bold mb-3">Quantity</label>
-          <p-inputnumber id="quantity" [(ngModel)]="product.quantity" fluid />
-        </div>
+      <div class="field">
+        <label for="post" class="block font-bold mb-2">Position</label>
+        <p-select
+          [(ngModel)]="staffRequest.post"
+          inputId="post"
+          [options]="positions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select a position"
+          class="w-full"
+          [disabled]="loading()"
+        ></p-select>
+        <small class="text-red-500" *ngIf="submitted && !staffRequest.post"
+          >Position is required.</small
+        >
       </div>
     </div>
   </ng-template>
 
-  <ng-template #footer>
-    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
-    <p-button label="Save" icon="pi pi-check" (click)="saveProduct()" />
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (click)="hideDialog()"
+      [disabled]="loading()"
+    ></p-button>
+    <p-button
+      label="Save"
+      icon="pi pi-check"
+      (click)="saveStaff()"
+      [loading]="loading()"
+    ></p-button>
   </ng-template>
 </p-dialog>
 
-<p-confirmdialog [style]="{ width: '450px' }" />
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

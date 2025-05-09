@@ -1,26 +1,31 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
-import { Product, ProductService } from '../../../core/services/product.service';
-import { CommonModule, CurrencyPipe, NgIf } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Button, ButtonModule } from 'primeng/button';
-import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
-import { Dialog, DialogModule } from 'primeng/dialog';
-import { IconField, IconFieldModule } from 'primeng/iconfield';
-import { InputIcon, InputIconModule } from 'primeng/inputicon';
-import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
-import { InputText, InputTextModule } from 'primeng/inputtext';
-import { RadioButton, RadioButtonModule } from 'primeng/radiobutton';
-import { Rating, RatingModule } from 'primeng/rating';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { RatingModule } from 'primeng/rating';
 import { RippleModule } from 'primeng/ripple';
-import { Select, SelectModule } from 'primeng/select';
-import { Tag, TagModule } from 'primeng/tag';
-import { Textarea, TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { Toolbar, ToolbarModule } from 'primeng/toolbar';
+import { ToolbarModule } from 'primeng/toolbar';
 import { AdminSupplierService } from '../../../core/services/admin/admin-supplier.service';
-
+import { SupplierModel } from '../../../core/model/supplier.model';
+import { SupplierRequest } from '../../../core/interfaces/supplier-http.interface';
+import { TooltipModule } from 'primeng/tooltip';
+import { NotificationService } from '../../../core/services/notification.service';
+import { LoadingService } from '../../../core/services/loading.service';
+import { TableSkeletonComponent } from '../../../shared/components/skeletors/table-skeleton.component';
+import { finalize } from 'rxjs';
 
 interface Column {
   field: string;
@@ -53,44 +58,61 @@ interface ExportColumn {
     TagModule,
     InputIconModule,
     IconFieldModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TooltipModule,
+    TableSkeletonComponent
   ],
-  providers: [ProductService, MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './supplier.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SupplierComponent {
+  // Services
+  supplierService = inject(AdminSupplierService);
+  notificationService = inject(NotificationService);
+  confirmationService = inject(ConfirmationService);
+  loadingService = inject(LoadingService);
 
-  supplierService = inject(AdminSupplierService)
+  // Component ID for loading state tracking
+  private readonly COMPONENT_ID = 'supplier-component';
 
-  suppierRs = this.supplierService.getSuppliersRs()
+  // State management
+  supplierDialog: boolean = false;
+  suppliers = signal<SupplierModel[]>([]);
+  loading = this.loadingService.getLoadingState(this.COMPONENT_ID);
 
-  productDialog: boolean = false;
-
-  products = signal<Product[]>([]);
-
-  product!: Product;
-
-  selectedProducts!: Product[] | null;
-
+  supplier: SupplierModel = {} as SupplierModel;
+  supplierRequest: SupplierRequest = {} as SupplierRequest;
+  selectedSuppliers: SupplierModel[] | null = null;
   submitted: boolean = false;
-
-  statuses!: any[];
 
   @ViewChild('dt') dt!: Table;
 
   exportColumns!: ExportColumn[];
-
   cols!: Column[];
 
-  constructor(
-    private productService: ProductService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {
-    // effect(()=>{
-      console.log(this.suppierRs)
-    // })
+  constructor() {
+    effect(() => {
+      this.loadSuppliers();
+    });
+  }
+
+  loadSuppliers() {
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    this.supplierService.getSuppliers()
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: (data: any) => {
+          this.suppliers.set(data);
+        },
+        error: (error) => {
+          this.notificationService.showError(
+            'Error',
+            'Failed to load suppliers. Please try again later.'
+          );
+        }
+      });
   }
 
   exportCSV() {
@@ -98,26 +120,17 @@ export class SupplierComponent {
   }
 
   ngOnInit() {
-    this.loadDemoData();
+    this.initializeColumns();
   }
 
-  loadDemoData() {
-    this.productService.getProducts().then((data) => {
-      this.products.set(data);
-    });
-
-    this.statuses = [
-      { label: 'INSTOCK', value: 'instock' },
-      { label: 'LOWSTOCK', value: 'lowstock' },
-      { label: 'OUTOFSTOCK', value: 'outofstock' }
-    ];
-
+  initializeColumns() {
     this.cols = [
-      { field: 'code', header: 'Code', customExportHeader: 'Product Code' },
+      { field: 'id', header: 'ID' },
       { field: 'name', header: 'Name' },
-      { field: 'image', header: 'Image' },
-      { field: 'price', header: 'Price' },
-      { field: 'category', header: 'Category' }
+      { field: 'ruc', header: 'RUC' },
+      { field: 'email', header: 'Email' },
+      { field: 'phone', header: 'Phone' },
+      { field: 'isActive', header: 'Status' }
     ];
 
     this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
@@ -128,118 +141,227 @@ export class SupplierComponent {
   }
 
   openNew() {
-    this.product = {};
+    this.supplier = {} as SupplierModel;
+    this.supplierRequest = {} as SupplierRequest;
     this.submitted = false;
-    this.productDialog = true;
+    this.supplierDialog = true;
   }
 
-  editProduct(product: Product) {
-    this.product = { ...product };
-    this.productDialog = true;
+  editSupplier(supplier: SupplierModel) {
+    this.supplier = { ...supplier };
+    this.supplierRequest = {
+      name: supplier.name,
+      ruc: supplier.ruc,
+      email: supplier.email,
+      phone: supplier.phone,
+      isActive: supplier.isActive
+    };
+    this.supplierDialog = true;
   }
 
-  deleteSelectedProducts() {
+  deleteSelectedSuppliers() {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete the selected products?',
+      message: 'Are you sure you want to delete the selected suppliers?',
       header: 'Confirm',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
-        this.selectedProducts = null;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Products Deleted',
-          life: 3000
-        });
+        if (this.selectedSuppliers) {
+          this.loadingService.startLoading(this.COMPONENT_ID);
+
+          const deletePromises = this.selectedSuppliers.map(supplier =>
+            this.supplierService.deleteSupplier(supplier.id)
+          );
+
+          Promise.all(deletePromises)
+            .then(() => {
+              this.suppliers.update(currentSuppliers =>
+                currentSuppliers.filter(s => !this.selectedSuppliers?.some(selected => selected.id === s.id))
+              );
+
+              this.selectedSuppliers = null;
+              this.notificationService.showSuccess(
+                'Successful',
+                'Suppliers Deleted'
+              );
+            })
+            .catch(() => {
+              this.notificationService.showError(
+                'Error',
+                'Failed to delete one or more suppliers'
+              );
+            })
+            .finally(() => {
+              this.loadingService.stopLoading(this.COMPONENT_ID);
+            });
+        }
       }
     });
   }
 
   hideDialog() {
-    this.productDialog = false;
+    this.supplierDialog = false;
     this.submitted = false;
   }
 
-  deleteProduct(product: Product) {
+  deleteSupplier(supplier: SupplierModel) {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete ' + product.name + '?',
+      message: 'Are you sure you want to delete ' + supplier.name + '?',
       header: 'Confirm',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => val.id !== product.id));
-        this.product = {};
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Deleted',
-          life: 3000
-        });
+        this.loadingService.startLoading(this.COMPONENT_ID);
+
+        this.supplierService.deleteSupplier(supplier.id)
+          .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+          .subscribe({
+            next: () => {
+              this.suppliers.update(currentSuppliers =>
+                currentSuppliers.filter(s => s.id !== supplier.id)
+              );
+
+              this.notificationService.showSuccess(
+                'Successful',
+                'Supplier Deleted'
+              );
+            },
+            error: (error) => {
+              this.notificationService.showError(
+                'Error',
+                'Failed to delete supplier'
+              );
+            }
+          });
       }
     });
   }
 
-  findIndexById(id: string): number {
-    let index = -1;
-    for (let i = 0; i < this.products().length; i++) {
-      if (this.products()[i].id === id) {
-        index = i;
-        break;
-      }
-    }
-
-    return index;
+  getSeverity(isActive: boolean): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined {
+    return isActive ? 'success' : 'danger';
   }
 
-  createId(): string {
-    let id = '';
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < 5; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
-  }
-
-  getSeverity(status: string) {
-    switch (status) {
-      case 'INSTOCK':
-        return 'success';
-      case 'LOWSTOCK':
-        return 'warn';
-      case 'OUTOFSTOCK':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
-  saveProduct() {
+  saveSupplier() {
     this.submitted = true;
-    let _products = this.products();
-    if (this.product.name?.trim()) {
-      if (this.product.id) {
-        _products[this.findIndexById(this.product.id)] = this.product;
-        this.products.set([..._products]);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Updated',
-          life: 3000
-        });
-      } else {
-        this.product.id = this.createId();
-        this.product.image = 'product-placeholder.svg';
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Created',
-          life: 3000
-        });
-        this.products.set([..._products, this.product]);
-      }
 
-      this.productDialog = false;
-      this.product = {};
+    if (!this.supplierRequest.name?.trim() || !this.supplierRequest.ruc?.trim() ||
+        !this.supplierRequest.email?.trim() || !this.supplierRequest.phone?.trim()) {
+      return;
     }
+
+    // Ensure isActive is set (default to true for new suppliers)
+    if (this.supplierRequest.isActive === undefined) {
+      this.supplierRequest.isActive = true;
+    }
+
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    if (this.supplier.id) {
+      // Update existing supplier
+      this.supplierService.updateSupplier(this.supplierRequest)
+        .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+        .subscribe({
+          next: (response) => {
+            // Update the local data
+            this.suppliers.update(currentSuppliers => {
+              const index = currentSuppliers.findIndex(s => s.id === this.supplier.id);
+              if (index !== -1) {
+                const updatedSuppliers = [...currentSuppliers];
+                updatedSuppliers[index] = {
+                  ...this.supplier,
+                  ...this.supplierRequest
+                };
+                return updatedSuppliers;
+              }
+              return currentSuppliers;
+            });
+
+            this.notificationService.showSuccess(
+              'Successful',
+              'Supplier Updated'
+            );
+
+            this.supplierDialog = false;
+            this.supplier = {} as SupplierModel;
+            this.supplierRequest = {} as SupplierRequest;
+          },
+          error: (error) => {
+            this.notificationService.showError(
+              'Error',
+              'Failed to update supplier'
+            );
+          }
+        });
+    } else {
+      // Create new supplier
+      this.supplierService.createSupplier(this.supplierRequest)
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: (response: any) => {
+          // Add the new supplier with the ID from response
+          const newSupplier: SupplierModel = {
+            id: response.id || Math.floor(Math.random() * 1000),
+            name: this.supplierRequest.name,
+            ruc: this.supplierRequest.ruc,
+            email: this.supplierRequest.email,
+            phone: this.supplierRequest.phone,
+            isActive: this.supplierRequest.isActive === undefined ? true : this.supplierRequest.isActive
+          };
+
+          this.suppliers.update(currentSuppliers => [...currentSuppliers, newSupplier]);
+
+          this.notificationService.showSuccess(
+            'Successful',
+            'Supplier Created'
+          );
+
+          this.supplierDialog = false;
+          this.supplier = {} as SupplierModel;
+          this.supplierRequest = {} as SupplierRequest;
+        },
+        error: (error) => {
+          this.notificationService.showError(
+            'Error',
+            'Failed to create supplier'
+          );
+        }
+      });
+    }
+  }
+
+  toggleStatus(supplier: SupplierModel) {
+    const updatedSupplier: SupplierRequest = {
+      name: supplier.name,
+      ruc: supplier.ruc,
+      email: supplier.email,
+      phone: supplier.phone,
+      isActive: !supplier.isActive
+    };
+
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    this.supplierService.updateSupplier(updatedSupplier)
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: () => {
+          this.suppliers.update(currentSuppliers => {
+            return currentSuppliers.map(s => {
+              if (s.id === supplier.id) {
+                return { ...s, isActive: !s.isActive };
+              }
+              return s;
+            });
+          });
+
+          this.notificationService.showSuccess(
+            'Successful',
+            `Supplier ${supplier.isActive ? 'Deactivated' : 'Activated'}`
+          );
+        },
+        error: () => {
+          this.notificationService.showError(
+            'Error',
+            'Failed to update supplier status'
+          );
+        }
+      });
   }
 }

@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
-import { Product, ProductService } from '../../../core/services/product.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -20,6 +19,13 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { AdminStaffService } from '../../../core/services/admin/admin-staff.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { LoadingService } from '../../../core/services/loading.service';
+import { TableSkeletonComponent } from '../../../shared/components/skeletors/table-skeleton.component';
+import { finalize } from 'rxjs';
+import { StaffModel } from '../../../core/model/staff.model';
+import { StaffPost, StaffRequest } from '../../../core/interfaces/staff-http.interface';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Column {
   field: string;
@@ -52,38 +58,67 @@ interface ExportColumn {
     TagModule,
     InputIconModule,
     IconFieldModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TooltipModule,
+    TableSkeletonComponent
   ],
-  providers: [ProductService, MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './staff.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StaffComponent {
-  private staff = inject(AdminStaffService)
-  
-  productDialog: boolean = false;
+  // Services
+  staffService = inject(AdminStaffService);
+  notificationService = inject(NotificationService);
+  confirmationService = inject(ConfirmationService);
+  loadingService = inject(LoadingService);
 
-  products = signal<Product[]>([]);
+  // Component ID for loading state tracking
+  private readonly COMPONENT_ID = 'staff-component';
 
-  product!: Product;
+  // State management
+  staffDialog: boolean = false;
+  staff = signal<StaffModel[]>([]);
+  loading = this.loadingService.getLoadingState(this.COMPONENT_ID);
 
-  selectedProducts!: Product[] | null;
-
+  staffMember: StaffModel = {} as StaffModel;
+  staffRequest: StaffRequest = {} as StaffRequest;
+  selectedStaff: StaffModel[] | null = null;
   submitted: boolean = false;
 
-  statuses!: any[];
+  positions = [
+    { label: 'Administrator', value: 'ADMINISTRADOR' },
+    { label: 'Warehouse Manager', value: 'ALMACENERO' },
+    { label: 'Supervisor', value: 'SUPERVISOR' }
+  ];
 
   @ViewChild('dt') dt!: Table;
 
   exportColumns!: ExportColumn[];
-
   cols!: Column[];
 
-  constructor(
-    private productService: ProductService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {
+  constructor() {
+    effect(() => {
+      this.loadStaff();
+    });
+  }
+
+  loadStaff() {
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    this.staffService.getAllStaff()
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: (data: any) => {
+          this.staff.set(data);
+        },
+        error: (error) => {
+          this.notificationService.showError(
+            'Error',
+            'Failed to load staff data. Please try again later.'
+          );
+        }
+      });
   }
 
   exportCSV() {
@@ -91,26 +126,15 @@ export class StaffComponent {
   }
 
   ngOnInit() {
-    this.loadDemoData();
+    this.initializeColumns();
   }
 
-  loadDemoData() {
-    this.productService.getProducts().then((data) => {
-      this.products.set(data);
-    });
-
-    this.statuses = [
-      { label: 'INSTOCK', value: 'instock' },
-      { label: 'LOWSTOCK', value: 'lowstock' },
-      { label: 'OUTOFSTOCK', value: 'outofstock' }
-    ];
-
+  initializeColumns() {
     this.cols = [
-      { field: 'code', header: 'Code', customExportHeader: 'Product Code' },
+      { field: 'id', header: 'ID' },
       { field: 'name', header: 'Name' },
-      { field: 'image', header: 'Image' },
-      { field: 'price', header: 'Price' },
-      { field: 'category', header: 'Category' }
+      { field: 'email', header: 'Email' },
+      { field: 'post', header: 'Position' }
     ];
 
     this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
@@ -121,118 +145,188 @@ export class StaffComponent {
   }
 
   openNew() {
-    this.product = {};
+    this.staffMember = {} as StaffModel;
+    this.staffRequest = {} as StaffRequest;
     this.submitted = false;
-    this.productDialog = true;
+    this.staffDialog = true;
   }
 
-  editProduct(product: Product) {
-    this.product = { ...product };
-    this.productDialog = true;
+  editStaff(staffMember: StaffModel) {
+    this.staffMember = { ...staffMember };
+    this.staffRequest = {
+      name: staffMember.name,
+      email: staffMember.email,
+      post: staffMember.post as StaffPost
+    };
+    this.staffDialog = true;
   }
 
-  deleteSelectedProducts() {
+  deleteSelectedStaff() {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete the selected products?',
+      message: 'Are you sure you want to delete the selected staff members?',
       header: 'Confirm',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
-        this.selectedProducts = null;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Products Deleted',
-          life: 3000
-        });
+        if (this.selectedStaff) {
+          this.loadingService.startLoading(this.COMPONENT_ID);
+
+          const deletePromises = this.selectedStaff.map(staffMember =>
+            this.staffService.deleteStaff(staffMember.id)
+          );
+
+          Promise.all(deletePromises)
+            .then(() => {
+              this.staff.update(currentStaff =>
+                currentStaff.filter(s => !this.selectedStaff?.some(selected => selected.id === s.id))
+              );
+
+              this.selectedStaff = null;
+              this.notificationService.showSuccess(
+                'Successful',
+                'Staff Members Deleted'
+              );
+            })
+            .catch(() => {
+              this.notificationService.showError(
+                'Error',
+                'Failed to delete one or more staff members'
+              );
+            })
+            .finally(() => {
+              this.loadingService.stopLoading(this.COMPONENT_ID);
+            });
+        }
       }
     });
   }
 
   hideDialog() {
-    this.productDialog = false;
+    this.staffDialog = false;
     this.submitted = false;
   }
 
-  deleteProduct(product: Product) {
+  deleteStaff(staffMember: StaffModel) {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete ' + product.name + '?',
+      message: 'Are you sure you want to delete ' + staffMember.name + '?',
       header: 'Confirm',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => val.id !== product.id));
-        this.product = {};
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Deleted',
-          life: 3000
-        });
+        this.loadingService.startLoading(this.COMPONENT_ID);
+
+        this.staffService.deleteStaff(staffMember.id)
+          .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+          .subscribe({
+            next: () => {
+              this.staff.update(currentStaff =>
+                currentStaff.filter(s => s.id !== staffMember.id)
+              );
+
+              this.notificationService.showSuccess(
+                'Successful',
+                'Staff Member Deleted'
+              );
+            },
+            error: (error) => {
+              this.notificationService.showError(
+                'Error',
+                'Failed to delete staff member'
+              );
+            }
+          });
       }
     });
   }
 
-  findIndexById(id: string): number {
-    let index = -1;
-    for (let i = 0; i < this.products().length; i++) {
-      if (this.products()[i].id === id) {
-        index = i;
-        break;
-      }
-    }
-
-    return index;
-  }
-
-  createId(): string {
-    let id = '';
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < 5; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
-  }
-
-  getSeverity(status: string) {
-    switch (status) {
-      case 'INSTOCK':
-        return 'success';
-      case 'LOWSTOCK':
-        return 'warn';
-      case 'OUTOFSTOCK':
+  getPostSeverity(post: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined {
+    switch (post) {
+      case 'Administrator':
         return 'danger';
-      default:
+      case 'Developer':
         return 'info';
+      case 'Support':
+        return 'warn'; // changed from 'warning' to 'warn'
+      default:
+        return 'secondary';
     }
   }
 
-  saveProduct() {
+  saveStaff() {
     this.submitted = true;
-    let _products = this.products();
-    if (this.product.name?.trim()) {
-      if (this.product.id) {
-        _products[this.findIndexById(this.product.id)] = this.product;
-        this.products.set([..._products]);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Updated',
-          life: 3000
-        });
-      } else {
-        this.product.id = this.createId();
-        this.product.image = 'product-placeholder.svg';
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Created',
-          life: 3000
-        });
-        this.products.set([..._products, this.product]);
-      }
 
-      this.productDialog = false;
-      this.product = {};
+    if (!this.staffRequest.name?.trim() || !this.staffRequest.email?.trim() || !this.staffRequest.post) {
+      return;
+    }
+
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    if (this.staffMember.id) {
+      // Update existing staff
+      this.staffService.updateStaff(this.staffRequest, this.staffMember.id)
+        .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+        .subscribe({
+          next: (response) => {
+            // Update the local data
+            this.staff.update(currentStaff => {
+              const index = currentStaff.findIndex(s => s.id === this.staffMember.id);
+              if (index !== -1) {
+                const updatedStaffList = [...currentStaff];
+                updatedStaffList[index] = {
+                  ...this.staffMember,
+                  ...this.staffRequest
+                };
+                return updatedStaffList;
+              }
+              return currentStaff;
+            });
+
+            this.notificationService.showSuccess(
+              'Successful',
+              'Staff Member Updated'
+            );
+
+            this.staffDialog = false;
+            this.staffMember = {} as StaffModel;
+            this.staffRequest = {} as StaffRequest;
+          },
+          error: (error) => {
+            this.notificationService.showError(
+              'Error',
+              'Failed to update staff member'
+            );
+          }
+        });
+    } else {
+      // Create new staff
+      this.staffService.createStaff(this.staffRequest)
+        .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+        .subscribe({
+          next: (response: any) => {
+            // Add the new staff member with the ID from response
+            const newStaffMember: StaffModel = {
+              id: response.id || Math.floor(Math.random() * 1000), // Fallback random ID if not provided
+              name: this.staffRequest.name,
+              email: this.staffRequest.email,
+              post: this.staffRequest.post
+            };
+
+            this.staff.update(currentStaff => [...currentStaff, newStaffMember]);
+
+            this.notificationService.showSuccess(
+              'Successful',
+              'Staff Member Created'
+            );
+
+            this.staffDialog = false;
+            this.staffMember = {} as StaffModel;
+            this.staffRequest = {} as StaffRequest;
+          },
+          error: (error) => {
+            this.notificationService.showError(
+              'Error',
+              'Failed to create staff member'
+            );
+          }
+        });
     }
   }
 }

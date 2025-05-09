@@ -12,6 +12,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { MessagesModule } from 'primeng/messages';
 import { ToastModule } from 'primeng/toast';
+import { ImageCompareModule } from 'primeng/imagecompare';
 import { AdminCategoryService } from '../../../../core/services/admin/admin-category.service';
 import { AdminProductService } from '../../../../core/services/admin/admin-product.service';
 import { LoadingService } from '../../../../core/services/loading.service';
@@ -20,7 +21,7 @@ import { CategoryModel } from '../../../../core/model/category.model';
 import { ProductModel } from '../../../../core/model/product.model';
 import { ProductRequest } from '../../../../core/interfaces/product-http.interface';
 import { finalize } from 'rxjs';
-import {Textarea} from 'primeng/textarea';
+import { Textarea } from 'primeng/textarea';
 
 @Component({
   selector: 'app-update-product',
@@ -38,7 +39,8 @@ import {Textarea} from 'primeng/textarea';
     Textarea,
     MessageModule,
     MessagesModule,
-    ToastModule
+    ToastModule,
+    ImageCompareModule
   ],
   templateUrl: './update-product.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,6 +62,7 @@ export class UpdateProductComponent implements OnInit {
   product = signal<ProductModel | null>(null);
   loading = this.loadingService.getLoadingState(this.COMPONENT_ID);
   submitted = false;
+  showImageCompare = signal<boolean>(false);
 
   // Form data
   productRequest: ProductRequest = {
@@ -72,8 +75,9 @@ export class UpdateProductComponent implements OnInit {
     file: undefined
   };
 
-  // Preview
-  previewImage: string | ArrayBuffer | null = null;
+  // Preview images
+  originalImage: string | null = null;
+  newImage: string | ArrayBuffer | null = null;
 
   ngOnInit() {
     this.loadCategories();
@@ -113,7 +117,7 @@ export class UpdateProductComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.product.set(data);
-          this.previewImage = data.image?.imageUrl || null;
+          this.originalImage = data.image?.imageUrl || null;
 
           // Initialize form data from product
           this.productRequest = {
@@ -144,7 +148,8 @@ export class UpdateProductComponent implements OnInit {
       // Show preview
       const reader = new FileReader();
       reader.onload = () => {
-        this.previewImage = reader.result;
+        this.newImage = reader.result;
+        this.showImageCompare.set(true);
       };
       reader.readAsDataURL(file);
     }
@@ -152,12 +157,8 @@ export class UpdateProductComponent implements OnInit {
 
   removeFile() {
     this.productRequest.file = undefined;
-    const currentProduct = this.product();
-    if (currentProduct?.image?.imageUrl) {
-      this.previewImage = currentProduct.image.imageUrl;
-    } else {
-      this.previewImage = null;
-    }
+    this.newImage = null;
+    this.showImageCompare.set(false);
   }
 
   updateProduct() {

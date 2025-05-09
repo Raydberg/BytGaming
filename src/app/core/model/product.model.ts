@@ -7,11 +7,12 @@ export interface ProductModel {
   isActive:    boolean;
   image:       Image;
   category:    Category;
+  active:      boolean;
 }
 
 export interface Category {
   id:          number;
-  nombre:      string;
+  name:        string;
   description: string;
 }
 

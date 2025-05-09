@@ -1,40 +1,41 @@
-import {ChangeDetectionStrategy, Component, inject, signal, ViewChild} from '@angular/core';
-import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {Button, ButtonModule} from 'primeng/button';
-import {ConfirmDialog, ConfirmDialogModule} from 'primeng/confirmdialog';
-import {Dialog, DialogModule} from 'primeng/dialog';
-import {IconField, IconFieldModule} from 'primeng/iconfield';
-import {InputIcon, InputIconModule} from 'primeng/inputicon';
-import {InputNumber, InputNumberModule} from 'primeng/inputnumber';
-import {InputText, InputTextModule} from 'primeng/inputtext';
-import {RadioButton, RadioButtonModule} from 'primeng/radiobutton';
-import {Rating, RatingModule} from 'primeng/rating';
-import {RippleModule} from 'primeng/ripple';
-import {Select, SelectModule} from 'primeng/select';
-import {Tag, TagModule} from 'primeng/tag';
-import {Textarea, TextareaModule} from 'primeng/textarea';
-import {ToastModule} from 'primeng/toast';
-import {Toolbar, ToolbarModule} from 'primeng/toolbar';
-import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../../core/services/product.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { RatingModule } from 'primeng/rating';
+import { RippleModule } from 'primeng/ripple';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
+import { ToastModule } from 'primeng/toast';
+import { ToolbarModule } from 'primeng/toolbar';
+import { Table, TableModule } from 'primeng/table';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { AdminProductService } from '../../../../core/services/admin/admin-product.service';
 import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
+import { ProductModel } from '../../../../core/model/product.model';
+import { finalize } from 'rxjs';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { TableSkeletonComponent } from '../../../../shared/components/skeletors/table-skeleton.component';
+import {TooltipModule} from 'primeng/tooltip';
 
 interface Column {
   field: string;
   header: string;
-  customExportHeader?: string;
-}
-
-interface ExportColumn {
-  title: string;
-  dataKey: string;
 }
 
 @Component({
   selector: 'list-products',
+  standalone: true,
   imports: [
     CommonModule,
     TableModule,
@@ -54,67 +55,66 @@ interface ExportColumn {
     InputIconModule,
     IconFieldModule,
     ConfirmDialogModule,
-    CurrencyFormatPipe
+    CurrencyFormatPipe,
+    TableSkeletonComponent,
+    TooltipModule
   ],
-  providers: [ProductService, MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './list-products.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListProductsComponent {
-  private productsService = inject(AdminProductService)
-  productDialog: boolean = false;
+  // Services
+  private productService = inject(AdminProductService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private loadingService = inject(LoadingService);
 
-  products = signal<Product[]>([]);
+  // Component ID for loading state tracking
+  private readonly COMPONENT_ID = 'product-list';
 
-  product!: Product;
-
-  selectedProducts!: Product[] | null;
-
-  submitted: boolean = false;
-
-  statuses!: any[];
+  // State management
+  products = signal<ProductModel[]>([]);
+  loading = this.loadingService.getLoadingState(this.COMPONENT_ID);
+  selectedProducts: ProductModel[] | null = null;
 
   @ViewChild('dt') dt!: Table;
 
-  exportColumns!: ExportColumn[];
+  cols: Column[] = [
+    { field: 'id', header: 'ID' },
+    { field: 'nameProduct', header: 'Nombre' },
+    { field: 'description', header: 'Descripción' },
+    { field: 'price', header: 'Precio' },
+    { field: 'units', header: 'Unidades' },
+    { field: 'category', header: 'Categoría' },
+    { field: 'image', header: 'Imagen' },
+    { field: 'isActive', header: 'Estado' }
+  ];
 
-  cols!: Column[];
-
-  constructor(
-    private productService: ProductService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {
-  }
-
-  exportCSV() {
-    this.dt.exportCSV();
-  }
-
-  ngOnInit() {
-    this.loadDemoData();
-  }
-
-  loadDemoData() {
-    this.productService.getProducts().then((data) => {
-      this.products.set(data);
+  constructor() {
+    effect(() => {
+      this.loadProducts();
     });
+  }
 
-    this.statuses = [
-      {label: 'INSTOCK', value: 'instock'},
-      {label: 'LOWSTOCK', value: 'lowstock'},
-      {label: 'OUTOFSTOCK', value: 'outofstock'}
-    ];
+  loadProducts() {
+    this.loadingService.startLoading(this.COMPONENT_ID);
 
-    this.cols = [
-      {field: 'code', header: 'Code', customExportHeader: 'Product Code'},
-      {field: 'name', header: 'Name'},
-      {field: 'image', header: 'Image'},
-      {field: 'price', header: 'Price'},
-      {field: 'category', header: 'Category'}
-    ];
-
-    this.exportColumns = this.cols.map((col) => ({title: col.header, dataKey: col.field}));
+    this.productService.getAllProduct()
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: (data) => {
+          this.products.set(data);
+        },
+        error: (error) => {
+          console.error('Error loading products:', error);
+          this.notificationService.showError(
+            'Error',
+            'No se pudieron cargar los productos'
+          );
+        }
+      });
   }
 
   onGlobalFilter(table: Table, event: Event) {
@@ -122,119 +122,118 @@ export class ListProductsComponent {
   }
 
   openNew() {
-    this.product = {};
-    this.submitted = false;
-    this.productDialog = true;
+    this.router.navigate(['/admin/products/create']);
   }
 
-  editProduct(product: Product) {
-    this.product = {...product};
-    this.productDialog = true;
+  editProduct(product: ProductModel) {
+    this.router.navigate([`/admin/products/product/${product.id}`]);
   }
 
   deleteSelectedProducts() {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete the selected products?',
-      header: 'Confirm',
+      message: '¿Estás seguro de eliminar los productos seleccionados?',
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
-        this.selectedProducts = null;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Products Deleted',
-          life: 3000
-        });
+        if (this.selectedProducts && this.selectedProducts.length > 0) {
+          this.loadingService.startLoading(this.COMPONENT_ID);
+
+          const deletePromises = this.selectedProducts.map(product =>
+            this.productService.deleteProduct(product.id)
+          );
+
+          Promise.all(deletePromises)
+            .then(() => {
+              this.products.update(currentProducts =>
+                currentProducts.filter(p => !this.selectedProducts?.some(selected => selected.id === p.id))
+              );
+
+              this.selectedProducts = null;
+              this.notificationService.showSuccess(
+                'Éxito',
+                'Productos eliminados correctamente'
+              );
+            })
+            .catch(error => {
+              console.error('Error deleting products:', error);
+              this.notificationService.showError(
+                'Error',
+                'No se pudieron eliminar los productos'
+              );
+            })
+            .finally(() => {
+              this.loadingService.stopLoading(this.COMPONENT_ID);
+            });
+        }
       }
     });
   }
 
-  hideDialog() {
-    this.productDialog = false;
-    this.submitted = false;
-  }
-
-  deleteProduct(product: Product) {
+  deleteProduct(product: ProductModel) {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete ' + product.name + '?',
-      header: 'Confirm',
+      message: `¿Estás seguro de eliminar el producto ${product.nameProduct}?`,
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => val.id !== product.id));
-        this.product = {};
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Deleted',
-          life: 3000
-        });
+        this.loadingService.startLoading(this.COMPONENT_ID);
+
+        this.productService.deleteProduct(product.id)
+          .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+          .subscribe({
+            next: () => {
+              this.products.update(currentProducts =>
+                currentProducts.filter(p => p.id !== product.id)
+              );
+
+              this.notificationService.showSuccess(
+                'Éxito',
+                'Producto eliminado correctamente'
+              );
+            },
+            error: (error) => {
+              console.error('Error deleting product:', error);
+              this.notificationService.showError(
+                'Error',
+                'No se pudo eliminar el producto'
+              );
+            }
+          });
       }
     });
   }
 
-  findIndexById(id: string): number {
-    let index = -1;
-    for (let i = 0; i < this.products().length; i++) {
-      if (this.products()[i].id === id) {
-        index = i;
-        break;
-      }
-    }
+  toggleProductStatus(product: ProductModel) {
+    this.loadingService.startLoading(this.COMPONENT_ID);
 
-    return index;
+    this.productService.toggleProductStatus(product.id, !product.isActive)
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: () => {
+          this.products.update(currentProducts => {
+            return currentProducts.map(p => {
+              if (p.id === product.id) {
+                return { ...p, isActive: !p.isActive };
+              }
+              return p;
+            });
+          });
+
+          this.notificationService.showSuccess(
+            'Éxito',
+            `Producto ${product.isActive ? 'desactivado' : 'activado'} correctamente`
+          );
+        },
+        error: (error) => {
+          console.error('Error toggling product status:', error);
+          this.notificationService.showError(
+            'Error',
+            'No se pudo cambiar el estado del producto'
+          );
+        }
+      });
   }
 
-  createId(): string {
-    let id = '';
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < 5; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
-  }
-
-  getSeverity(status: string) {
-    switch (status) {
-      case 'INSTOCK':
-        return 'success';
-      case 'LOWSTOCK':
-        return 'warn';
-      case 'OUTOFSTOCK':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
-  saveProduct() {
-    this.submitted = true;
-    let _products = this.products();
-    if (this.product.name?.trim()) {
-      if (this.product.id) {
-        _products[this.findIndexById(this.product.id)] = this.product;
-        this.products.set([..._products]);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Updated',
-          life: 3000
-        });
-      } else {
-        this.product.id = this.createId();
-        this.product.image = 'product-placeholder.svg';
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Created',
-          life: 3000
-        });
-        this.products.set([..._products, this.product]);
-      }
-
-      this.productDialog = false;
-      this.product = {};
-    }
+  getSeverity(active: boolean): 'success' | 'danger' {
+    return active ? 'success' : 'danger';
   }
 }
-

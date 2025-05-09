@@ -256,7 +256,7 @@ export class SupplierComponent {
 
     if (this.supplier.id) {
       // Update existing supplier
-      this.supplierService.updateSupplier(this.supplierRequest)
+      this.supplierService.updateSupplier(this.supplierRequest, this.supplier.id)
         .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
         .subscribe({
           next: (response) => {
@@ -338,7 +338,7 @@ export class SupplierComponent {
 
     this.loadingService.startLoading(this.COMPONENT_ID);
 
-    this.supplierService.updateSupplier(updatedSupplier)
+    this.supplierService.updateSupplier(updatedSupplier, supplier.id)
       .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
       .subscribe({
         next: () => {

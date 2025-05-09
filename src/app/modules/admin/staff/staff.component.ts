@@ -113,6 +113,7 @@ export class StaffComponent {
           this.staff.set(data);
         },
         error: (error) => {
+          console.error("Error loading staff data:", error);
           this.notificationService.showError(
             'Error',
             'Failed to load staff data. Please try again later.'
@@ -154,6 +155,7 @@ export class StaffComponent {
   editStaff(staffMember: StaffModel) {
     this.staffMember = { ...staffMember };
     this.staffRequest = {
+      id: staffMember.id,
       name: staffMember.name,
       email: staffMember.email,
       post: staffMember.post as StaffPost
@@ -186,7 +188,8 @@ export class StaffComponent {
                 'Staff Members Deleted'
               );
             })
-            .catch(() => {
+            .catch((error) => {
+              console.error("Error deleting staff members:", error);
               this.notificationService.showError(
                 'Error',
                 'Failed to delete one or more staff members'
@@ -227,6 +230,7 @@ export class StaffComponent {
               );
             },
             error: (error) => {
+              console.error("Error deleting staff member:", error);
               this.notificationService.showError(
                 'Error',
                 'Failed to delete staff member'
@@ -239,12 +243,12 @@ export class StaffComponent {
 
   getPostSeverity(post: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined {
     switch (post) {
-      case 'Administrator':
+      case 'ADMINISTRADOR':
         return 'danger';
-      case 'Developer':
-        return 'info';
-      case 'Support':
-        return 'warn'; // changed from 'warning' to 'warn'
+      case 'ALMACENERO':
+        return 'success';
+      case 'SUPERVISOR':
+        return 'warn';
       default:
         return 'secondary';
     }
@@ -261,6 +265,8 @@ export class StaffComponent {
 
     if (this.staffMember.id) {
       // Update existing staff
+      this.staffRequest.id = this.staffMember.id;
+
       this.staffService.updateStaff(this.staffRequest, this.staffMember.id)
         .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
         .subscribe({
@@ -271,8 +277,10 @@ export class StaffComponent {
               if (index !== -1) {
                 const updatedStaffList = [...currentStaff];
                 updatedStaffList[index] = {
-                  ...this.staffMember,
-                  ...this.staffRequest
+                  id: this.staffMember.id,
+                  name: this.staffRequest.name || this.staffMember.name,
+                  email: this.staffRequest.email || this.staffMember.email,
+                  post: this.staffRequest.post || this.staffMember.post as string
                 };
                 return updatedStaffList;
               }
@@ -289,6 +297,7 @@ export class StaffComponent {
             this.staffRequest = {} as StaffRequest;
           },
           error: (error) => {
+            console.error("Error updating staff member:", error);
             this.notificationService.showError(
               'Error',
               'Failed to update staff member'
@@ -304,9 +313,9 @@ export class StaffComponent {
             // Add the new staff member with the ID from response
             const newStaffMember: StaffModel = {
               id: response.id || Math.floor(Math.random() * 1000), // Fallback random ID if not provided
-              name: this.staffRequest.name,
-              email: this.staffRequest.email,
-              post: this.staffRequest.post
+              name: this.staffRequest.name || '', // Add empty string fallback
+              email: this.staffRequest.email || '', // Add empty string fallback
+              post: this.staffRequest.post || 'ALMACENERO' // Add default post
             };
 
             this.staff.update(currentStaff => [...currentStaff, newStaffMember]);
@@ -321,6 +330,7 @@ export class StaffComponent {
             this.staffRequest = {} as StaffRequest;
           },
           error: (error) => {
+            console.error("Error creating staff member:", error);
             this.notificationService.showError(
               'Error',
               'Failed to create staff member'

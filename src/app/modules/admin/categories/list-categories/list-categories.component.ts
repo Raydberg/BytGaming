@@ -1,25 +1,30 @@
-import { ChangeDetectionStrategy, Component, inject, signal, ViewChild } from '@angular/core';
-import { CommonModule, CurrencyPipe, NgIf } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Button, ButtonModule } from 'primeng/button';
-import { ConfirmDialog, ConfirmDialogModule } from 'primeng/confirmdialog';
-import { Dialog, DialogModule } from 'primeng/dialog';
-import { IconField, IconFieldModule } from 'primeng/iconfield';
-import { InputIcon, InputIconModule } from 'primeng/inputicon';
-import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
-import { InputText, InputTextModule } from 'primeng/inputtext';
-import { RadioButton, RadioButtonModule } from 'primeng/radiobutton';
-import { Rating, RatingModule } from 'primeng/rating';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { RatingModule } from 'primeng/rating';
 import { RippleModule } from 'primeng/ripple';
-import { Select, SelectModule } from 'primeng/select';
-import { Tag, TagModule } from 'primeng/tag';
-import { Textarea, TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
-import { Toolbar, ToolbarModule } from 'primeng/toolbar';
+import { ToolbarModule } from 'primeng/toolbar';
 import { Table, TableModule } from 'primeng/table';
-import { Product, ProductService } from '../../../../core/services/product.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AdminCategoryService } from '../../../../core/services/admin/admin-category.service';
+import { CategoryModel } from '../../../../core/model/category.model';
+import { CategoryRequest } from '../../../../core/interfaces/category-http.interface';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { TableSkeletonComponent } from '../../../../shared/components/skeletors/table-skeleton.component';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { finalize } from 'rxjs';
 
 interface Column {
   field: string;
@@ -52,62 +57,76 @@ interface ExportColumn {
     TagModule,
     InputIconModule,
     IconFieldModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TableSkeletonComponent
   ],
-  providers: [ProductService, MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './list-categories.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListCategoriesComponent {
+  // Services
+  private categoryService = inject(AdminCategoryService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private loadingService = inject(LoadingService);
 
-  private categoryService = inject(AdminCategoryService)
-  productDialog: boolean = false;
+  // Component ID for loading state tracking
+  private readonly COMPONENT_ID = 'categories-component';
 
-  products = signal<Product[]>([]);
+  // State management
+  categoryDialog: boolean = false;
+  categories = signal<CategoryModel[]>([]);
+  loading = this.loadingService.getLoadingState(this.COMPONENT_ID);
 
-  product!: Product;
-
-  selectedProducts!: Product[] | null;
-
+  category: CategoryModel = {} as CategoryModel;
+  categoryRequest: CategoryRequest = {} as CategoryRequest;
+  selectedCategories: CategoryModel[] | null = null;
   submitted: boolean = false;
-
-  statuses!: any[];
 
   @ViewChild('dt') dt!: Table;
 
   exportColumns!: ExportColumn[];
-
   cols!: Column[];
 
-  constructor(
-    private productService: ProductService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {
+  constructor() {
+    effect(() => {
+      this.loadCategories();
+    });
   }
 
+  loadCategories() {
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    this.categoryService.getAllCategory()
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: (data: any) => {
+          this.categories.set(data);
+        },
+        error: (error) => {
+          console.error("Error loading categories data:", error);
+          this.notificationService.showError(
+            'Error',
+            'Failed to load categories data. Please try again later.'
+          );
+        }
+      });
+  }
+
+  exportCSV() {
+    this.dt.exportCSV();
+  }
 
   ngOnInit() {
-    this.loadDemoData();
+    this.initializeColumns();
   }
 
-  loadDemoData() {
-    this.productService.getProducts().then((data) => {
-      this.products.set(data);
-    });
-
-    this.statuses = [
-      { label: 'INSTOCK', value: 'instock' },
-      { label: 'LOWSTOCK', value: 'lowstock' },
-      { label: 'OUTOFSTOCK', value: 'outofstock' }
-    ];
-
+  initializeColumns() {
     this.cols = [
-      { field: 'code', header: 'Code', customExportHeader: 'Product Code' },
-      { field: 'name', header: 'Name' },
-      { field: 'image', header: 'Image' },
-      { field: 'price', header: 'Price' },
-      { field: 'category', header: 'Category' }
+      { field: 'id', header: 'ID' },
+      { field: 'name', header: 'Nombre' },
+      { field: 'description', header: 'Descripción' }
     ];
 
     this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
@@ -118,118 +137,178 @@ export class ListCategoriesComponent {
   }
 
   openNew() {
-    this.product = {};
+    this.category = {} as CategoryModel;
+    this.categoryRequest = {} as CategoryRequest;
     this.submitted = false;
-    this.productDialog = true;
+    this.categoryDialog = true;
   }
 
-  editProduct(product: Product) {
-    this.product = { ...product };
-    this.productDialog = true;
+  editCategory(category: CategoryModel) {
+    this.category = { ...category };
+    this.categoryRequest = {
+      name: category.name,
+      description: category.description
+    };
+    this.categoryDialog = true;
   }
 
-  deleteSelectedProducts() {
+  deleteSelectedCategories() {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete the selected products?',
-      header: 'Confirm',
+      message: '¿Está seguro de eliminar las categorías seleccionadas?',
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
-        this.selectedProducts = null;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Products Deleted',
-          life: 3000
-        });
+        if (this.selectedCategories) {
+          this.loadingService.startLoading(this.COMPONENT_ID);
+
+          const deletePromises = this.selectedCategories.map(category =>
+            this.categoryService.deleteCategory(category.id)
+          );
+
+          Promise.all(deletePromises)
+            .then(() => {
+              this.categories.update(currentCategories =>
+                currentCategories.filter(c => !this.selectedCategories?.some(selected => selected.id === c.id))
+              );
+
+              this.selectedCategories = null;
+              this.notificationService.showSuccess(
+                'Éxito',
+                'Categorías eliminadas'
+              );
+            })
+            .catch((error) => {
+              console.error("Error deleting categories:", error);
+              this.notificationService.showError(
+                'Error',
+                'No se pudieron eliminar una o más categorías'
+              );
+            })
+            .finally(() => {
+              this.loadingService.stopLoading(this.COMPONENT_ID);
+            });
+        }
       }
     });
   }
 
   hideDialog() {
-    this.productDialog = false;
+    this.categoryDialog = false;
     this.submitted = false;
   }
 
-  deleteProduct(product: Product) {
+  deleteCategory(category: CategoryModel) {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete ' + product.name + '?',
-      header: 'Confirm',
+      message: '¿Está seguro de eliminar ' + category.name + '?',
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => val.id !== product.id));
-        this.product = {};
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Deleted',
-          life: 3000
-        });
+        this.loadingService.startLoading(this.COMPONENT_ID);
+
+        this.categoryService.deleteCategory(category.id)
+          .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+          .subscribe({
+            next: () => {
+              this.categories.update(currentCategories =>
+                currentCategories.filter(c => c.id !== category.id)
+              );
+
+              this.notificationService.showSuccess(
+                'Éxito',
+                'Categoría eliminada'
+              );
+            },
+            error: (error) => {
+              console.error("Error deleting category:", error);
+              this.notificationService.showError(
+                'Error',
+                'No se pudo eliminar la categoría'
+              );
+            }
+          });
       }
     });
   }
 
-  findIndexById(id: string): number {
-    let index = -1;
-    for (let i = 0; i < this.products().length; i++) {
-      if (this.products()[i].id === id) {
-        index = i;
-        break;
-      }
-    }
-
-    return index;
-  }
-
-  createId(): string {
-    let id = '';
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < 5; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
-  }
-
-  getSeverity(status: string) {
-    switch (status) {
-      case 'INSTOCK':
-        return 'success';
-      case 'LOWSTOCK':
-        return 'warn';
-      case 'OUTOFSTOCK':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
-  saveProduct() {
+  saveCategory() {
     this.submitted = true;
-    let _products = this.products();
-    if (this.product.name?.trim()) {
-      if (this.product.id) {
-        _products[this.findIndexById(this.product.id)] = this.product;
-        this.products.set([..._products]);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Updated',
-          life: 3000
-        });
-      } else {
-        this.product.id = this.createId();
-        this.product.image = 'product-placeholder.svg';
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Created',
-          life: 3000
-        });
-        this.products.set([..._products, this.product]);
-      }
 
-      this.productDialog = false;
-      this.product = {};
+    if (!this.categoryRequest.name?.trim()) {
+      return;
+    }
+
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    if (this.category.id) {
+      // Update existing category
+      this.categoryService.updateCategory(this.category.id, this.categoryRequest)
+        .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+        .subscribe({
+          next: () => {
+            // Update the local data
+            this.categories.update(currentCategories => {
+              const index = currentCategories.findIndex(c => c.id === this.category.id);
+              if (index !== -1) {
+                const updatedCategories = [...currentCategories];
+                updatedCategories[index] = {
+                  id: this.category.id,
+                  name: this.categoryRequest.name || '',
+                  description: this.categoryRequest.description || ''
+                };
+                return updatedCategories;
+              }
+              return currentCategories;
+            });
+
+            this.notificationService.showSuccess(
+              'Éxito',
+              'Categoría actualizada'
+            );
+
+            this.categoryDialog = false;
+            this.category = {} as CategoryModel;
+            this.categoryRequest = {} as CategoryRequest;
+          },
+          error: (error) => {
+            console.error("Error updating category:", error);
+            this.notificationService.showError(
+              'Error',
+              'No se pudo actualizar la categoría'
+            );
+          }
+        });
+    } else {
+      // Create new category
+      this.categoryService.createCategory(this.categoryRequest)
+        .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+        .subscribe({
+          next: (response: any) => {
+            // Add the new category with the ID from response
+            const newCategory: CategoryModel = {
+              id: response.id,
+              name: this.categoryRequest.name || '',
+              description: this.categoryRequest.description || ''
+            };
+
+            this.categories.update(currentCategories => [...currentCategories, newCategory]);
+
+            this.notificationService.showSuccess(
+              'Éxito',
+              'Categoría creada'
+            );
+
+            this.categoryDialog = false;
+            this.category = {} as CategoryModel;
+            this.categoryRequest = {} as CategoryRequest;
+          },
+          error: (error) => {
+            console.error("Error creating category:", error);
+            this.notificationService.showError(
+              'Error',
+              'No se pudo crear la categoría'
+            );
+          }
+        });
     }
   }
 }

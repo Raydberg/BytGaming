@@ -1,26 +1,31 @@
-import {ChangeDetectionStrategy, Component, inject, signal, ViewChild} from '@angular/core';
-import {CommonModule, CurrencyPipe, NgIf} from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {Button, ButtonModule} from 'primeng/button';
-import {ConfirmDialog, ConfirmDialogModule} from 'primeng/confirmdialog';
-import {Dialog, DialogModule} from 'primeng/dialog';
-import {IconField, IconFieldModule} from 'primeng/iconfield';
-import {InputIcon, InputIconModule} from 'primeng/inputicon';
-import {InputNumber, InputNumberModule} from 'primeng/inputnumber';
-import {InputText, InputTextModule} from 'primeng/inputtext';
-import {RadioButton, RadioButtonModule} from 'primeng/radiobutton';
-import {Rating, RatingModule} from 'primeng/rating';
-import {RippleModule} from 'primeng/ripple';
-import {Select, SelectModule} from 'primeng/select';
-import {Tag, TagModule} from 'primeng/tag';
-import {Textarea, TextareaModule} from 'primeng/textarea';
-import {ToastModule} from 'primeng/toast';
-import {Toolbar, ToolbarModule} from 'primeng/toolbar';
-import {Table, TableModule} from 'primeng/table';
-import {Product, ProductService} from '../../../../core/services/product.service';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import { ChangeDetectionStrategy, Component, inject, signal, ViewChild, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { RatingModule } from 'primeng/rating';
+import { RippleModule } from 'primeng/ripple';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
+import { ToastModule } from 'primeng/toast';
+import { ToolbarModule } from 'primeng/toolbar';
+import { Table, TableModule } from 'primeng/table';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { AdminUserService } from '../../../../core/services/admin/admin-user.service';
-
+import { UserModel } from '../../../../core/model/user.model';
+import { RegisterRequest } from '../../../../core/interfaces/auth-http.interface';
+import { finalize } from 'rxjs';
+import { LoadingService } from '../../../../core/services/loading.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { TableSkeletonComponent } from '../../../../shared/components/skeletors/table-skeleton.component';
+import { SelectButtonModule } from 'primeng/selectbutton';
 interface Column {
   field: string;
   header: string;
@@ -34,6 +39,7 @@ interface ExportColumn {
 
 @Component({
   selector: 'app-list-users',
+  standalone: true,
   imports: [
     CommonModule,
     TableModule,
@@ -52,37 +58,67 @@ interface ExportColumn {
     TagModule,
     InputIconModule,
     IconFieldModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TableSkeletonComponent,
+    SelectButtonModule
   ],
-  providers: [ProductService, MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './list-users.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListUsersComponent {
-  private userService = inject(AdminUserService)
-  productDialog: boolean = false;
+  // Services
+  private userService = inject(AdminUserService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private loadingService = inject(LoadingService);
 
-  products = signal<Product[]>([]);
+  // Component ID for loading state tracking
+  private readonly COMPONENT_ID = 'users-list';
 
-  product!: Product;
+  // State management
+  userDialog: boolean = false;
+  users = signal<UserModel[]>([]);
+  loading = this.loadingService.getLoadingState(this.COMPONENT_ID);
 
-  selectedProducts!: Product[] | null;
-
+  user: UserModel | null = null;
+  userRequest: RegisterRequest = {} as RegisterRequest;
+  selectedUsers: UserModel[] | null = null;
   submitted: boolean = false;
 
-  statuses!: any[];
+  roles = [
+    { label: 'Administrador', value: 'ADMIN' },
+    { label: 'Usuario', value: 'USER' }
+  ];
 
   @ViewChild('dt') dt!: Table;
 
   exportColumns!: ExportColumn[];
-
   cols!: Column[];
 
-  constructor(
-    private productService: ProductService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {
+  constructor() {
+    effect(() => {
+      this.loadUsers();
+    });
+  }
+
+  loadUsers() {
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    this.userService.getAllUsers()
+      .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+      .subscribe({
+        next: (data: any) => {
+          this.users.set(data);
+        },
+        error: (error) => {
+          console.error("Error loading users data:", error);
+          this.notificationService.showError(
+            'Error',
+            'No se pudieron cargar los usuarios. Por favor, inténtelo de nuevo más tarde.'
+          );
+        }
+      });
   }
 
   exportCSV() {
@@ -90,29 +126,20 @@ export class ListUsersComponent {
   }
 
   ngOnInit() {
-    this.loadDemoData();
+    this.initializeColumns();
   }
 
-  loadDemoData() {
-    this.productService.getProducts().then((data) => {
-      this.products.set(data);
-    });
-
-    this.statuses = [
-      {label: 'INSTOCK', value: 'instock'},
-      {label: 'LOWSTOCK', value: 'lowstock'},
-      {label: 'OUTOFSTOCK', value: 'outofstock'}
-    ];
-
+  initializeColumns() {
     this.cols = [
-      {field: 'code', header: 'Code', customExportHeader: 'Product Code'},
-      {field: 'name', header: 'Name'},
-      {field: 'image', header: 'Image'},
-      {field: 'price', header: 'Price'},
-      {field: 'category', header: 'Category'}
+      { field: 'id', header: 'ID' },
+      { field: 'name', header: 'Nombre' },
+      { field: 'lastName', header: 'Apellido' },
+      { field: 'email', header: 'Email' },
+      { field: 'role.roleEnum', header: 'Rol' },
+      { field: 'enabled', header: 'Estado' }
     ];
 
-    this.exportColumns = this.cols.map((col) => ({title: col.header, dataKey: col.field}));
+    this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
   }
 
   onGlobalFilter(table: Table, event: Event) {
@@ -120,119 +147,172 @@ export class ListUsersComponent {
   }
 
   openNew() {
-    this.product = {};
+    this.user = null;
+    this.userRequest = {
+      name: '',
+      lastName: '',
+      email: '',
+      password: '',
+      role: 'USER'
+    };
     this.submitted = false;
-    this.productDialog = true;
+    this.userDialog = true;
   }
 
-  editProduct(product: Product) {
-    this.product = {...product};
-    this.productDialog = true;
+  editUser(user: UserModel) {
+    this.user = { ...user };
+    this.userRequest = {
+      name: user.name || '',
+      lastName: user.lastName || '',
+      email: user.email,
+      role: user.role.roleEnum as "ADMIN" | "USER"
+    };
+    this.userDialog = true;
   }
 
-  deleteSelectedProducts() {
+  deleteSelectedUsers() {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete the selected products?',
-      header: 'Confirm',
+      message: '¿Está seguro de eliminar los usuarios seleccionados?',
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
-        this.selectedProducts = null;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Products Deleted',
-          life: 3000
-        });
+        if (this.selectedUsers) {
+          this.loadingService.startLoading(this.COMPONENT_ID);
+
+          const deletePromises = this.selectedUsers.map(user =>
+            this.userService.deleteUser(user.id)
+          );
+
+          Promise.all(deletePromises)
+            .then(() => {
+              this.users.update(currentUsers =>
+                currentUsers.filter(u => !this.selectedUsers?.some(selected => selected.id === u.id))
+              );
+
+              this.selectedUsers = null;
+              this.notificationService.showSuccess(
+                'Éxito',
+                'Usuarios eliminados correctamente'
+              );
+            })
+            .catch((error) => {
+              console.error("Error deleting users:", error);
+              this.notificationService.showError(
+                'Error',
+                'No se pudieron eliminar uno o más usuarios'
+              );
+            })
+            .finally(() => {
+              this.loadingService.stopLoading(this.COMPONENT_ID);
+            });
+        }
       }
     });
   }
 
   hideDialog() {
-    this.productDialog = false;
+    this.userDialog = false;
     this.submitted = false;
   }
 
-  deleteProduct(product: Product) {
+  deleteUser(user: UserModel) {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete ' + product.name + '?',
-      header: 'Confirm',
+      message: '¿Está seguro de eliminar el usuario ' + user.email + '?',
+      header: 'Confirmar',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.products.set(this.products().filter((val) => val.id !== product.id));
-        this.product = {};
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Deleted',
-          life: 3000
-        });
+        this.loadingService.startLoading(this.COMPONENT_ID);
+
+        this.userService.deleteUser(user.id)
+          .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+          .subscribe({
+            next: () => {
+              this.users.update(currentUsers =>
+                currentUsers.filter(u => u.id !== user.id)
+              );
+
+              this.notificationService.showSuccess(
+                'Éxito',
+                'Usuario eliminado correctamente'
+              );
+            },
+            error: (error) => {
+              console.error("Error deleting user:", error);
+              this.notificationService.showError(
+                'Error',
+                'No se pudo eliminar el usuario'
+              );
+            }
+          });
       }
     });
   }
 
-  findIndexById(id: string): number {
-    let index = -1;
-    for (let i = 0; i < this.products().length; i++) {
-      if (this.products()[i].id === id) {
-        index = i;
-        break;
-      }
-    }
-
-    return index;
+  getSeverity(enabled: boolean) {
+    return enabled ? 'success' : 'danger';
   }
 
-  createId(): string {
-    let id = '';
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < 5; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
+  getStatusText(enabled: boolean) {
+    return enabled ? 'Activo' : 'Inactivo';
   }
 
-  getSeverity(status: string) {
-    switch (status) {
-      case 'INSTOCK':
-        return 'success';
-      case 'LOWSTOCK':
-        return 'warn';
-      case 'OUTOFSTOCK':
-        return 'danger';
-      default:
-        return 'info';
-    }
-  }
-
-  saveProduct() {
+  saveUser() {
     this.submitted = true;
-    let _products = this.products();
-    if (this.product.name?.trim()) {
-      if (this.product.id) {
-        _products[this.findIndexById(this.product.id)] = this.product;
-        this.products.set([..._products]);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Updated',
-          life: 3000
-        });
-      } else {
-        this.product.id = this.createId();
-        this.product.image = 'product-placeholder.svg';
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Successful',
-          detail: 'Product Created',
-          life: 3000
-        });
-        this.products.set([..._products, this.product]);
-      }
 
-      this.productDialog = false;
-      this.product = {};
+    if (!this.userRequest.email?.trim() ||
+        (!this.user && !this.userRequest.password?.trim())) {
+      return;
+    }
+
+    this.loadingService.startLoading(this.COMPONENT_ID);
+
+    if (this.user) {
+      // Update existing user
+      this.userService.updateUser(this.user.id, this.userRequest)
+        .pipe(finalize(() => this.loadingService.stopLoading(this.COMPONENT_ID)))
+        .subscribe({
+          next: () => {
+            // Update local state with optimistic update
+            this.users.update(currentUsers => {
+              return currentUsers.map(u => {
+                if (u.id === this.user?.id) {
+                  return {
+                    ...u,
+                    name: this.userRequest.name || u.name,
+                    lastName: this.userRequest.lastName || u.lastName,
+                    email: this.userRequest.email || u.email,
+                    role: { ...u.role, roleEnum: this.userRequest.role || u.role.roleEnum }
+                  };
+                }
+                return u;
+              });
+            });
+
+            this.notificationService.showSuccess(
+              'Éxito',
+              'Usuario actualizado correctamente'
+            );
+
+            this.userDialog = false;
+            this.user = null;
+            this.userRequest = {} as RegisterRequest;
+          },
+          error: (error) => {
+            console.error("Error updating user:", error);
+            this.notificationService.showError(
+              'Error',
+              'No se pudo actualizar el usuario'
+            );
+          }
+        });
+    } else {
+      // This would typically be handled by an auth service or specific endpoint
+      // Since we don't have a specific register endpoint exposed here, this is a placeholder
+      this.notificationService.showInfo(
+        'Información',
+        'La creación de usuarios debe realizarse a través del registro'
+      );
+      this.userDialog = false;
     }
   }
 }
-

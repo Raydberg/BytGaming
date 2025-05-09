@@ -9,10 +9,10 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { MessagesModule } from 'primeng/messages';
 import { ToastModule } from 'primeng/toast';
-import { ImageCompareModule } from 'primeng/imagecompare';
 import { AdminCategoryService } from '../../../../core/services/admin/admin-category.service';
 import { AdminProductService } from '../../../../core/services/admin/admin-product.service';
 import { LoadingService } from '../../../../core/services/loading.service';
@@ -21,7 +21,6 @@ import { CategoryModel } from '../../../../core/model/category.model';
 import { ProductModel } from '../../../../core/model/product.model';
 import { ProductRequest } from '../../../../core/interfaces/product-http.interface';
 import { finalize } from 'rxjs';
-import { Textarea } from 'primeng/textarea';
 
 @Component({
   selector: 'app-update-product',
@@ -36,11 +35,10 @@ import { Textarea } from 'primeng/textarea';
     InputNumberModule,
     InputSwitchModule,
     InputTextModule,
-    Textarea,
+    TextareaModule,
     MessageModule,
     MessagesModule,
-    ToastModule,
-    ImageCompareModule
+    ToastModule
   ],
   templateUrl: './update-product.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -149,7 +147,6 @@ export class UpdateProductComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = () => {
         this.newImage = reader.result;
-        this.showImageCompare.set(true);
       };
       reader.readAsDataURL(file);
     }
@@ -158,7 +155,6 @@ export class UpdateProductComponent implements OnInit {
   removeFile() {
     this.productRequest.file = undefined;
     this.newImage = null;
-    this.showImageCompare.set(false);
   }
 
   updateProduct() {

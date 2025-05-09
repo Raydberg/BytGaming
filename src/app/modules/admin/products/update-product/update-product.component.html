@@ -76,41 +76,45 @@
           <div class="bg-primary p-3 text-white font-bold text-lg">Imagen del Producto</div>
         </ng-template>
         <div class="p-3 flex flex-col h-full justify-between">
-          <!-- Comparador -->
-          <div *ngIf="showImageCompare() && originalImage && newImage" class="flex-1">
-            <p-imagecompare class="w-full h-full shadow-lg rounded-2xl">
-              <ng-template #left>
-                <img [src]="originalImage" alt="Original" class="w-full h-full object-contain rounded-2xl" />
-              </ng-template>
-              <ng-template #right>
-                <img [src]="newImage" alt="Nueva" class="w-full h-full object-contain rounded-2xl" />
-              </ng-template>
-            </p-imagecompare>
-            <div class="flex justify-between mt-3">
-              <h4 class="font-semibold">Original</h4>
-              <h4 class="font-semibold">Nueva</h4>
-            </div>
-            <p-button label="Cancelar cambio" icon="pi pi-times" severity="danger" (onClick)="removeFile()" [disabled]="loading()" class="w-full mt-4"></p-button>
-          </div>
-
-          <!-- Preview y selector -->
-          <div *ngIf="!showImageCompare()" class="flex-1 flex flex-col justify-between">
+          <!-- Sección de imágenes simplificada -->
+          <div class="flex-1 flex flex-col justify-between">
             <div>
+              <!-- Mostrar imagen actual -->
+              <h3 class="text-lg font-bold mb-4 text-center">Imagen actual</h3>
               <div *ngIf="originalImage" class="mb-4">
-                <h3 class="text-lg font-medium mb-2 text-center">Vista previa</h3>
                 <div class="flex justify-center">
-                  <img [src]="originalImage" alt="Vista previa" class="rounded shadow-2 max-w-full" style="max-height:350px; object-fit:contain;" />
+                  <img [src]="originalImage" alt="Vista previa" class="rounded shadow-2 max-w-full"
+                       style="max-height:450px; object-fit:contain;" />
                 </div>
               </div>
-              <div *ngIf="!originalImage" class="border-dashed border-2 border-gray-300 p-5 text-center rounded mb-4">
+
+              <!-- Mostrar imagen nueva si está seleccionada -->
+              <div *ngIf="newImage" class="mb-4">
+                <h3 class="text-lg font-bold mb-2 text-center">Nueva imagen seleccionada</h3>
+                <div class="flex justify-center">
+                  <img [src]="newImage" alt="Nueva imagen" class="rounded shadow-2 max-w-full"
+                       style="max-height:250px; object-fit:contain;" />
+                </div>
+                <div class="flex justify-center mt-3">
+                  <p-button label="Cancelar cambio" icon="pi pi-times" severity="danger"
+                            (onClick)="removeFile()" [disabled]="loading()"></p-button>
+                </div>
+              </div>
+
+              <!-- Placeholder cuando no hay imagen -->
+              <div *ngIf="!originalImage && !newImage" class="border-dashed border-2 border-gray-300 p-5 text-center rounded mb-4">
                 <i class="pi pi-image text-5xl text-gray-400 mb-3"></i>
                 <p>No hay imagen disponible</p>
               </div>
             </div>
-            <div>
+
+            <!-- Selector de nueva imagen -->
+            <div *ngIf="!newImage" class="mt-4">
               <h3 class="text-lg font-medium mb-2 text-center">Seleccionar nueva imagen</h3>
-              <input type="file" accept="image/*" class="hidden" id="fileInput" (change)="onFileSelected($event)" [disabled]="loading()" />
-              <label for="fileInput" class="p-button p-button-outlined w-full flex justify-center items-center" [class.p-disabled]="loading()">
+              <input type="file" accept="image/*" class="hidden" id="fileInput"
+                     (change)="onFileSelected($event)" [disabled]="loading()" />
+              <label for="fileInput" class="p-button p-button-outlined w-full flex justify-center items-center"
+                     [class.p-disabled]="loading()">
                 <i class="pi pi-upload mr-2"></i>
                 <span>Seleccionar Imagen</span>
               </label>

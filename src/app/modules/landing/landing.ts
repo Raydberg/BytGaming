@@ -17,10 +17,10 @@ import { FooterWidget } from './components/footerwidget';
         <div class="bg-surface-0 dark:bg-surface-900">
             <div id="home" class="landing-wrapper overflow-hidden">
                 <hero-widget />
-                <features-widget />
-                <highlights-widget />
+<!--                <features-widget />-->
+<!--                <highlights-widget />-->
                 <!-- <pricing-widget /> -->
-                <footer-widget />
+<!--                <footer-widget />-->
             </div>
         </div>
     `

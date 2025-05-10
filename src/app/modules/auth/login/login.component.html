@@ -1,4 +1,5 @@
 <div class="flex items-center justify-center min-h-[calc(100vh-80px)] w-full overflow-hidden">
+  <p-toast></p-toast>
   <div class="flex flex-col items-center justify-center w-full max-w-md px-4">
     <div
       style="
@@ -23,59 +24,67 @@
           </div>
           <span class="text-muted-color font-medium">Inicia Sesión</span>
         </div>
-        <div>
-          <label
-            for="email1"
-            class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
-            >Email</label
-          >
-          <input
-            pInputText
-            id="email1"
-            type="text"
-            placeholder="Email address"
-            class="w-full mb-3"
-            [(ngModel)]="email"
-          />
-
-          <label
-            for="password1"
-            class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"
-            >Contraseña</label
-          >
-          <p-password
-            id="password1"
-            [(ngModel)]="password"
-            placeholder="Password"
-            [toggleMask]="true"
-            styleClass="mb-3"
-            [fluid]="true"
-            [feedback]="false"
-          ></p-password>
-
-          <div class="flex items-center justify-between mt-1 mb-3 gap-2">
-            <div class="flex items-center">
-              <p-checkbox
-                [(ngModel)]="checked"
-                id="rememberme1"
-                binary
-                class="mr-2"
-              ></p-checkbox>
-              <label for="rememberme1">Recordarme</label>
-            </div>
-            <span
-              class="font-medium no-underline text-right cursor-pointer text-primary"
-              routerLink="/auth/register"
-              >¿No tienes cuenta?</span
+        <form (ngSubmit)="login()">
+          <div>
+            <label
+              for="email1"
+              class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+              >Email</label
             >
-          </div>
+            <input
+              pInputText
+              id="email1"
+              type="text"
+              placeholder="Email address"
+              class="w-full mb-3"
+              [(ngModel)]="email"
+              name="email"
+              required
+            />
 
-          <p-button
-            label="Sign In"
-            styleClass="w-full"
-            routerLink="/"
-          ></p-button>
-        </div>
+            <label
+              for="password1"
+              class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"
+              >Contraseña</label
+            >
+            <p-password
+              id="password1"
+              [(ngModel)]="password"
+              placeholder="Password"
+              [toggleMask]="true"
+              styleClass="mb-3"
+              [fluid]="true"
+              [feedback]="false"
+              name="password"
+              required
+            ></p-password>
+
+            <div class="flex items-center justify-between mt-1 mb-3 gap-2">
+              <div class="flex items-center">
+                <p-checkbox
+                  [(ngModel)]="checked"
+                  id="rememberme1"
+                  binary
+                  class="mr-2"
+                  name="remember"
+                ></p-checkbox>
+                <label for="rememberme1">Recordarme</label>
+              </div>
+              <span
+                class="font-medium no-underline text-right cursor-pointer text-primary"
+                routerLink="/auth/register"
+                >¿No tienes cuenta?</span
+              >
+            </div>
+
+            <p-button
+              type="submit"
+              label="Iniciar Sesión"
+              styleClass="w-full"
+              [loading]="loading"
+            ></p-button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

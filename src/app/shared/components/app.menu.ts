@@ -26,7 +26,7 @@ export class AppMenu {
     this.model.set([
       {
         items: [
-          { label: 'Dashboard', icon: 'pi pi-home', routerLink: ['/admin'] },
+          // { label: 'Dashboard', icon: 'pi pi-home', routerLink: ['/admin'] },
           { label: 'Personal', icon: 'pi pi-users', routerLink: ['/admin/staff'] },
           { label: 'Proveedores', icon: 'pi pi-truck', routerLink: ['/admin/supplier'] },
           { label: 'Categorias', icon: 'pi pi-tags', routerLink: ['/admin/categories'] },

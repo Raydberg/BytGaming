@@ -1,25 +1,47 @@
 import { Component } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TagModule } from 'primeng/tag';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
-    selector: 'hero-widget',
-    imports: [ButtonModule, RippleModule],
-    template: `
-        <div
-            id="hero"
-            class="flex flex-col pt-6 px-6 lg:px-20 overflow-hidden"
-            style="background: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, rgb(238, 239, 175) 0%, rgb(195, 227, 250) 100%); clip-path: ellipse(150% 87% at 93% 13%)"
-        >
-            <div class="mx-6 md:mx-20 mt-0 md:mt-6">
-                <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Eu sem integer</span>eget magna fermentum</h1>
-                <p class="font-normal text-2xl leading-normal md:mt-4 text-gray-700">Sed blandit libero volutpat sed cras. Fames ac turpis egestas integer. Placerat in egestas erat...</p>
-                <button pButton pRipple [rounded]="true" type="button" label="Get Started" class="!text-xl mt-8 !px-4"></button>
-            </div>
-            <div class="flex justify-center md:justify-end">
-                <img src="https://primefaces.org/cdn/templates/sakai/landing/screen-1.png" alt="Hero Image" class="w-9/12 md:w-auto" />
+  selector: 'hero-widget',
+  standalone: true,
+  imports: [ButtonModule, RippleModule, ProgressSpinnerModule, TagModule, CommonModule, RouterLink],
+  template: `
+        <div class="grid grid-nogutter surface-section text-800 px-4 py-8 md:px-6 lg:px-8">
+            <div class="col-12 mx-auto lg:col-10">
+                <div class="grid flex justify-content-center align-items-center text-center">
+                    <div class="col-12 mb-4">
+                      <p-tag severity="warn" value="EN CONSTRUCCIÓN" class="text-lg"></p-tag>                    </div>
+                    <div class="col-12 mb-4">
+                        <h1 class="text-6xl font-bold text-primary mb-3">Sitio en construcción</h1>
+                        <span class="text-2xl text-600 block mb-5">Estamos trabajando para ofrecerte una mejor experiencia</span>
+                    </div>
+                    <div class="col-12 mb-6">
+                        <p-progressSpinner [style]="{ width: '80px', height: '80px' }" styleClass="custom-spinner" animationDuration="1.5s"></p-progressSpinner>
+                    </div>
+                    <div class="col-12 mb-6">
+                        <div class="text-xl text-600 line-height-3">
+                            Nuestro equipo está trabajando arduamente para crear un sitio impresionante.
+                            Mientras tanto, puedes contactarnos o explorar otras secciones disponibles.
+                        </div>
+                    </div>
+                    <div class="col-12 flex justify-content-center">
+                        <p-button label="Volver al inicio" icon="pi pi-home" routerLink="/" styleClass="p-button-lg mr-2"></p-button>
+                        <p-button label="Contacto" icon="pi pi-envelope" routerLink="/auth/login" styleClass="p-button-lg p-button-outlined"></p-button>
+                    </div>
+                </div>
             </div>
         </div>
-    `
+    `,
+  styles: [`
+        :host ::ng-deep .custom-spinner .p-progress-spinner-circle {
+            animation-duration: 1.5s;
+            stroke: var(--primary-color);
+        }
+    `]
 })
 export class HeroWidget {}

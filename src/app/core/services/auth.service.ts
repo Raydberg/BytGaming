@@ -44,9 +44,8 @@ export class AuthService {
   return this.http.post<any>(`${this.baseUrl}/auth/sign`, userData)
     .pipe(
       map(response => {
-        // Transform the response to include a success property
         return {
-          success: true,  // Add success flag for successful responses
+          success: true,
           ...response
         };
       }),

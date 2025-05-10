@@ -1,187 +1,115 @@
 <p-toast></p-toast>
 
 <div class="card">
-  <h2 class="text-2xl font-bold mb-4">Crear Nuevo Producto</h2>
-
-  <div class="grid">
-    <div class="col-12 md:col-8">
-      <p-card>
-        <div class="grid p-fluid">
-          <div class="col-12 md:col-6 field">
-            <label for="nameProduct" class="font-bold mb-2 block"
-              >Nombre *</label
-            >
-            <input
-              id="nameProduct"
-              type="text"
-              pInputText
-              [(ngModel)]="productRequest.nameProduct"
-              required
-              [disabled]="loading()"
-            />
-            <small
-              *ngIf="submitted && !productRequest.nameProduct"
-              class="p-error block mt-1"
-              >El nombre es obligatorio</small
-            >
-          </div>
-
-          <div class="col-12 md:col-6 field">
-            <label for="categoryId" class="font-bold mb-2 block"
-              >Categoría *</label
-            >
-            <p-dropdown
-              id="categoryId"
-              [options]="categories()"
-              optionLabel="name"
-              optionValue="id"
-              placeholder="Selecciona una categoría"
-              [(ngModel)]="productRequest.categoryId"
-              [disabled]="loading()"
-            ></p-dropdown>
-            <small
-              *ngIf="submitted && productRequest.categoryId === undefined"
-              class="p-error block mt-1"
-              >La categoría es obligatoria</small
-            >
-          </div>
-
-          <div class="col-12 md:col-6 field mt-3">
-            <label for="price" class="font-bold mb-2 block">Precio *</label>
-            <p-inputNumber
-              id="price"
-              [(ngModel)]="productRequest.price"
-              mode="currency"
-              currency="USD"
-              locale="en-US"
-              [minFractionDigits]="2"
-              [disabled]="loading()"
-            ></p-inputNumber>
-            <small
-              *ngIf="
-                submitted &&
-                (productRequest.price === undefined ||
-                  productRequest.price <= 0)
-              "
-              class="p-error block mt-1"
-              >El precio es obligatorio y debe ser mayor a 0</small
-            >
-          </div>
-
-          <div class="col-12 md:col-6 field mt-3">
-            <label for="units" class="font-bold mb-2 block">Unidades *</label>
-            <p-inputNumber
-              id="units"
-              [(ngModel)]="productRequest.units"
-              [showButtons]="true"
-              [min]="0"
-              [disabled]="loading()"
-            ></p-inputNumber>
-            <small
-              *ngIf="submitted && productRequest.units === undefined"
-              class="p-error block mt-1"
-              >Las unidades son obligatorias</small
-            >
-          </div>
-
-          <div class="col-12 field mt-3">
-            <label for="description" class="font-bold mb-2 block"
-              >Descripción *</label
-            >
-            <textarea
-              id="description"
-              pTextarea
-              [(ngModel)]="productRequest.description"
-              rows="5"
-              [autoResize]="true"
-              [disabled]="loading()"
-            ></textarea>
-            <small
-              *ngIf="submitted && !productRequest.description"
-              class="p-error block mt-1"
-              >La descripción es obligatoria</small
-            >
-          </div>
-
-          <div class="col-12 field mt-3">
-            <label class="font-bold mb-2 block">Estado</label>
-            <div class="flex align-items-center">
-              <p-inputSwitch
-                [(ngModel)]="productRequest.isActive"
-                [disabled]="loading()"
-              ></p-inputSwitch>
-              <span class="ml-2">{{
-                productRequest.isActive ? "Activo" : "Inactivo"
-              }}</span>
-            </div>
-          </div>
-        </div>
-      </p-card>
+  <div class="flex justify-content-between items-center mb-4">
+    <div>
+      <h2 class="text-2xl font-bold mb-1">Crear Nuevo Producto</h2>
+      <p class="text-500 m-0">Complete la información del producto y presione "Guardar" para crearlo</p>
     </div>
-
-    <div class="col-12 md:col-4">
-      <p-card header="Imagen del Producto">
-        <div class="flex flex-column align-items-center">
-          <div *ngIf="previewImage" class="mb-3">
-            <img
-              [src]="previewImage"
-              alt="Vista previa"
-              class="w-full max-w-full"
-              style="max-height: 200px; object-fit: contain"
-            />
-            <button
-              pButton
-              label="Eliminar"
-              icon="pi pi-trash"
-              class="p-button-danger p-button-sm mt-2 w-full"
-              (click)="removeFile()"
-              [disabled]="loading()"
-            ></button>
-          </div>
-
-          <div *ngIf="!previewImage" class="mb-3 w-full">
-            <div
-              class="border-dashed border-2 border-gray-300 p-5 text-center rounded"
-            >
-              <i class="pi pi-image text-5xl text-gray-400 mb-3"></i>
-              <p>Selecciona una imagen</p>
-            </div>
-          </div>
-
-          <div class="w-full">
-            <input
-              type="file"
-              accept="image/*"
-              class="hidden"
-              id="fileInput"
-              (change)="onFileSelected($event)"
-              [disabled]="loading()"
-            />
-            <label
-              for="fileInput"
-              class="p-button p-component p-button-outlined w-full flex justify-content-center"
-              [class.p-disabled]="loading()"
-            >
-              <span class="p-button-label">Seleccionar Imagen</span>
-            </label>
-          </div>
-        </div>
-      </p-card>
+    <div class="flex gap-3">
+      <p-button label="Cancelar" (onClick)="cancel()" [outlined]="true" [disabled]="loading()" icon="pi pi-arrow-left"></p-button>
+      <p-button label="Guardar" icon="pi pi-save" (onClick)="saveProduct()" [loading]="loading()" severity="success"></p-button>
     </div>
   </div>
 
-  <div class="flex justify-content-end gap-3 mt-4">
-    <p-button
-      label="Cancelar"
-      (onClick)="cancel()"
-      [outlined]="true"
-      [disabled]="loading()"
-    ></p-button>
-    <p-button
-      label="Guardar"
-      icon="pi pi-save"
-      (onClick)="saveProduct()"
-      [loading]="loading()"
-    ></p-button>
+  <!-- Flex layout para formulario e imagen lado a lado en lg -->
+  <div class="flex flex-col lg:flex-row gap-4">
+    <!-- Formulario: ocupa flex-1 -->
+    <div class="flex-1">
+      <p-card class="shadow-3 h-full">
+        <ng-template pTemplate="header">
+          <div class="bg-primary p-3 text-white font-bold text-lg">Información del producto</div>
+        </ng-template>
+        <div class="p-fluid p-formgrid p-grid">
+          <div class="p-field p-col-12 p-md-6">
+            <label for="nameProduct" class="font-bold">Nombre *</label>
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-tag"></i>
+              <input id="nameProduct" type="text" pInputText [(ngModel)]="productRequest.nameProduct" required [disabled]="loading()" class="w-full" />
+            </span>
+            <small *ngIf="submitted && !productRequest.nameProduct" class="p-error">El nombre es obligatorio</small>
+          </div>
+          <div class="p-field p-col-12 p-md-6">
+            <label for="categoryId" class="font-bold">Categoría *</label>
+            <p-dropdown id="categoryId" [options]="categories()" optionLabel="name" optionValue="id" placeholder="Selecciona una categoría"
+                        [(ngModel)]="productRequest.categoryId" [disabled]="loading()" class="w-full"></p-dropdown>
+            <small *ngIf="submitted && productRequest.categoryId === undefined" class="p-error">La categoría es obligatoria</small>
+          </div>
+          <div class="p-field p-col-12 p-md-6">
+            <label for="price" class="font-bold">Precio *</label>
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-dollar"></i>
+              <p-inputNumber id="price" [(ngModel)]="productRequest.price" mode="currency" currency="USD" locale="en-US" [minFractionDigits]="2" [disabled]="loading()" class="w-full"></p-inputNumber>
+            </span>
+            <small *ngIf="submitted && (productRequest.price === undefined || productRequest.price <= 0)" class="p-error">El precio es obligatorio y debe ser mayor a 0</small>
+          </div>
+          <div class="p-field p-col-12 p-md-6">
+            <label for="units" class="font-bold">Unidades *</label>
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-box"></i>
+              <p-inputNumber id="units" [(ngModel)]="productRequest.units" [showButtons]="true" [min]="0" [disabled]="loading()" class="w-full"></p-inputNumber>
+            </span>
+            <small *ngIf="submitted && productRequest.units === undefined" class="p-error">Las unidades son obligatorias</small>
+          </div>
+          <div class="p-field p-col-12">
+            <label for="description" class="font-bold">Descripción *</label>
+            <textarea id="description" pTextarea [(ngModel)]="productRequest.description" rows="5" [autoResize]="true" [disabled]="loading()" class="w-full"></textarea>
+            <small *ngIf="submitted && !productRequest.description" class="p-error">La descripción es obligatoria</small>
+          </div>
+          <div class="p-field p-col-12">
+            <label class="font-bold">Estado</label>
+            <div class="flex align-items-center">
+              <p-inputSwitch [(ngModel)]="productRequest.isActive" [disabled]="loading()"></p-inputSwitch>
+              <span class="ml-2">{{ productRequest.isActive ? 'Activo' : 'Inactivo' }}</span>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Imagen: ocupa flex-1 -->
+    <div class="flex-1">
+      <p-card class="shadow-3 h-full">
+        <ng-template pTemplate="header">
+          <div class="bg-primary p-3 text-white font-bold text-lg">Imagen del Producto</div>
+        </ng-template>
+        <div class="p-3 flex flex-col h-full justify-between">
+          <div class="flex-1 flex flex-col justify-between">
+            <div>
+              <!-- Mostrar imagen seleccionada -->
+              <h3 class="text-lg font-bold mb-4 text-center">Imagen seleccionada</h3>
+              <div *ngIf="previewImage" class="mb-4">
+                <div class="flex justify-center">
+                  <img [src]="previewImage" alt="Vista previa" class="rounded shadow-2 max-w-full"
+                       style="max-height:450px; object-fit:contain;" />
+                </div>
+                <div class="flex justify-center mt-3">
+                  <p-button label="Eliminar imagen" icon="pi pi-times" severity="danger"
+                            (onClick)="removeFile()" [disabled]="loading()"></p-button>
+                </div>
+              </div>
+
+              <!-- Placeholder cuando no hay imagen -->
+              <div *ngIf="!previewImage" class="border-dashed border-2 border-gray-300 p-5 text-center rounded mb-4">
+                <i class="pi pi-image text-5xl text-gray-400 mb-3"></i>
+                <p>No hay imagen seleccionada</p>
+              </div>
+            </div>
+
+            <!-- Selector de imagen -->
+            <div *ngIf="!previewImage" class="mt-4">
+              <h3 class="text-lg font-medium mb-2 text-center">Seleccionar imagen</h3>
+              <input type="file" accept="image/*" class="hidden" id="fileInput"
+                     (change)="onFileSelected($event)" [disabled]="loading()" />
+              <label for="fileInput" class="p-button p-button-outlined w-full flex justify-center items-center"
+                     [class.p-disabled]="loading()">
+                <i class="pi pi-upload mr-2"></i>
+                <span>Seleccionar Imagen</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
   </div>
 </div>
